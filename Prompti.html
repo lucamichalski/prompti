@@ -1,0 +1,2539 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Adventskalender Prompt Generator</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500&family=Geist:wght@300;400;500;600&display=swap');
+
+    :root{
+      --bg:         #111110;
+      --bg2:        #161614;
+      --panel:      #1c1b19;
+      --panel2:     #222120;
+
+      --text:       #f0ede8;
+      --text2:      #c4c0b8;
+      --muted:      #6a6660;
+      --muted2:     #8c8880;
+
+      --gold:       #c9a84c;
+      --gold-light: #e0c47a;
+      --gold-dim:   rgba(201,168,76,.15);
+      --gold-line:  rgba(201,168,76,.25);
+
+      --border:     rgba(255,248,235,.052);
+      --border-mid: rgba(255,248,235,.10);
+      --border-hi:  rgba(255,248,235,.17);
+      --border-gold:rgba(201,168,76,.32);
+
+      --shadow-m:   0 4px 28px rgba(0,0,0,.6);
+
+      --r:          8px;
+      --r-sm:       5px;
+    }
+
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    html{ scroll-behavior:smooth; }
+
+    body{
+      font-family: 'Geist', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Warm grain */
+    body::after{
+      content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23g)' opacity='1'/%3E%3C/svg%3E");
+      opacity:.025; mix-blend-mode:overlay;
+    }
+
+    header{
+      position:sticky; top:0; z-index:100;
+      background: rgba(17,17,16,.9);
+      backdrop-filter: blur(28px) saturate(1.1);
+      border-bottom: 1px solid var(--border);
+    }
+    .wrap{ max-width:1280px; margin:0 auto; padding:18px 28px; position:relative; z-index:1; }
+
+    h1{
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: 21px; font-weight:400; font-style:italic;
+      color: var(--text); letter-spacing:-0.01em;
+    }
+    .tagline{
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px; letter-spacing:0.14em;
+      text-transform: uppercase; color: var(--gold); opacity:.8;
+      margin-left: 12px; vertical-align: middle;
+    }
+    .sub{ color:var(--muted2); font-size:12px; font-weight:300; margin-top:2px; }
+
+    .pill{
+      display:inline-flex; gap:9px; align-items:center;
+      padding:6px 13px; border:1px solid var(--border);
+      border-radius:4px; background:rgba(255,248,235,.018);
+      color:var(--muted); font-size:12px;
+    }
+    .kbd{
+      font-family:'Geist Mono',monospace; font-size:10px;
+      padding:2px 6px; border:1px solid var(--border-mid);
+      border-radius:3px; background:rgba(255,248,235,.04);
+      color:var(--muted2); letter-spacing:0.05em;
+    }
+
+    .grid{ display:grid; grid-template-columns:1.3fr .7fr; gap:16px; align-items:start; }
+    @media(max-width:980px){ .grid{grid-template-columns:1fr;} }
+
+    .card{
+      background:var(--panel); border:1px solid var(--border);
+      border-radius:var(--r); box-shadow:var(--shadow-m); overflow:hidden;
+    }
+
+    .hd{
+      padding:14px 20px; border-bottom:1px solid var(--border);
+      display:flex; align-items:center; gap:9px;
+      background:rgba(255,248,235,.014);
+    }
+    .hd-bar{
+      width:2px; height:13px; background:var(--gold);
+      border-radius:2px; opacity:.65; flex-shrink:0;
+    }
+    .hd-label{
+      font-family:'Geist Mono',monospace; font-size:10px; font-weight:500;
+      letter-spacing:0.13em; text-transform:uppercase; color:var(--muted2);
+    }
+    .bd{ padding:20px; }
+
+    .hint{ color:var(--muted); font-size:12px; line-height:1.55; font-weight:300; }
+    .row{ display:flex; gap:9px; flex-wrap:wrap; align-items:center; }
+
+    /* Chips */
+    .chipbar{ display:flex; gap:6px; flex-wrap:wrap; }
+    .chip{
+      position:relative;
+      border:1px solid var(--border);
+      background:rgba(255,248,235,.018);
+      color:var(--muted2);
+      padding:6px 11px; border-radius:var(--r-sm);
+      cursor:pointer; user-select:none;
+      font-size:12px; font-weight:400;
+      transition:background .12s, border-color .12s, color .12s, transform .08s;
+      padding-right:32px; letter-spacing:0.01em;
+    }
+    .chip[data-w="0"]{ padding-right:11px; }
+    .chip[data-w="1"],.chip[data-w="1.5"],.chip[data-w="2"]{
+      border-color:var(--border-gold); background:var(--gold-dim); color:var(--gold-light);
+    }
+    .chip::after{
+      content:attr(data-w); position:absolute; right:8px; top:50%; transform:translateY(-50%);
+      font-size:10px; font-family:'Geist Mono',monospace; color:var(--gold); font-weight:500;
+    }
+    .chip[data-w="0"]::after{ content:''; }
+    .chip:hover{ background:rgba(255,248,235,.048); border-color:var(--border-mid); color:var(--text2); }
+    .chip:active{ transform:scale(.97); }
+    .chip.on{ border-color:var(--border-gold); background:var(--gold-dim); color:var(--gold-light); }
+
+    /* Inputs */
+    input[type="text"],input[type="number"],textarea,select{
+      width:100%; background:rgba(255,248,235,.025);
+      border:1px solid var(--border); border-radius:var(--r-sm);
+      color:var(--text); padding:9px 12px; outline:none;
+      font-size:13px; font-family:'Geist',sans-serif; font-weight:300;
+      transition:border-color .15s, background .15s; appearance:none;
+    }
+    input:focus,textarea:focus,select:focus{
+      border-color:var(--border-gold); background:rgba(201,168,76,.04);
+    }
+    select{
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238c8880'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 12px center;
+      padding-right:30px; background-color:rgba(255,248,235,.025);
+    }
+    select option{ background:#1c1b19; color:var(--text); }
+    textarea{
+      min-height:170px; resize:vertical; line-height:1.7;
+      font-family:'Geist Mono',monospace; font-size:12px;
+      font-weight:300; letter-spacing:0.01em; color:var(--text2);
+    }
+
+    /* Buttons */
+    .btn{
+      border:1px solid var(--border-mid); background:rgba(255,248,235,.04);
+      color:var(--text2); padding:9px 17px; border-radius:var(--r-sm);
+      cursor:pointer; font-weight:400; font-size:13px;
+      font-family:'Geist',sans-serif; letter-spacing:0.02em;
+      transition:background .12s, border-color .12s, color .12s, transform .08s;
+      white-space:nowrap;
+    }
+    .btn:hover{ background:rgba(255,248,235,.08); border-color:var(--border-hi); color:var(--text); }
+    .btn:active{ transform:scale(.97); }
+    .btn.primary{
+      background:var(--gold); border-color:var(--gold);
+      color:#111110; font-weight:600; letter-spacing:0.03em;
+    }
+    .btn.primary:hover{ background:var(--gold-light); border-color:var(--gold-light); }
+    .btn.action{
+      background:rgba(255,248,235,.055); border-color:var(--border-hi); color:var(--text); font-weight:500;
+    }
+    .btn.action:hover{ background:rgba(201,168,76,.1); border-color:var(--border-gold); color:var(--gold-light); }
+    .btn.danger{
+      background:transparent; border-color:rgba(210,80,60,.2); color:rgba(210,100,80,.75);
+    }
+    .btn.danger:hover{ background:rgba(210,80,60,.07); border-color:rgba(210,80,60,.35); color:#d06050; }
+
+    .toast{
+      position:fixed; left:50%; transform:translateX(-50%);
+      bottom:28px; padding:10px 20px;
+      background:var(--gold); border:none; color:#111110;
+      border-radius:5px; font-size:13px; font-weight:600;
+      opacity:0; pointer-events:none; transition:all .2s ease;
+      box-shadow:0 4px 24px rgba(0,0,0,.5); letter-spacing:0.03em;
+      font-family:'Geist',sans-serif;
+    }
+    .toast.show{ opacity:1; transform:translateX(-50%) translateY(-5px); }
+
+    /* Groups */
+    .group{
+      padding:15px; border:1px solid var(--border);
+      border-radius:var(--r-sm); background:rgba(255,248,235,.01);
+      transition:border-color .2s;
+    }
+    .group:hover{ border-color:var(--border-mid); }
+    .group+.group{ margin-top:11px; }
+
+    .groupTitle{
+      font-family:'Geist Mono',monospace; font-size:10px; font-weight:500;
+      margin-bottom:11px; text-transform:uppercase; letter-spacing:0.13em;
+      color:var(--muted2); display:flex; align-items:center; gap:10px;
+    }
+    .groupTitle::after{
+      content:''; flex:1; height:1px;
+      background:linear-gradient(90deg, var(--border-mid), transparent);
+    }
+
+    .tiny{
+      font-family:'Geist Mono',monospace; font-size:10px; color:var(--muted);
+      font-weight:400; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:8px;
+    }
+
+    .printTip{
+      padding:12px 15px; background:rgba(201,168,76,.055);
+      border:1px solid rgba(201,168,76,.14); border-radius:var(--r-sm);
+      margin-bottom:15px; font-size:12px; line-height:1.65; color:var(--muted2);
+    }
+    .printTip strong{ color:var(--gold-light); font-weight:600; }
+
+    .templateBar{
+      padding:13px; background:rgba(255,248,235,.018);
+      border:1px solid var(--border); border-radius:var(--r-sm); margin-bottom:15px;
+    }
+    .templateBar .row{ margin-bottom:8px; }
+    .templateBar .row:last-child{ margin-bottom:0; }
+
+    .warnings{ margin:7px 0; }
+    .warnings .w{
+      color:rgba(215,185,95,.6); font-size:11px; margin:3px 0; line-height:1.4;
+      font-family:'Geist Mono',monospace; font-weight:300; letter-spacing:0.01em;
+    }
+
+    .anchor-label{
+      display:inline-flex; align-items:center; gap:6px;
+      font-family:'Geist Mono',monospace; font-size:10px; font-weight:400;
+      letter-spacing:0.1em; text-transform:uppercase;
+      color:var(--gold); opacity:.7; margin-bottom:7px;
+    }
+    .anchor-label::before{
+      content:''; display:inline-block;
+      width:5px; height:5px; border-radius:50%; background:var(--gold);
+    }
+
+    .mono{ font-family:'Geist Mono',monospace; }
+
+    .finalWrap{
+      margin-top:12px; padding:13px 15px;
+      border-radius:var(--r-sm); border:1px solid rgba(201,168,76,.22);
+      background:rgba(201,168,76,.045);
+    }
+    .finalTitle{
+      font-family:'Geist Mono',monospace; font-size:10px; font-weight:500;
+      text-transform:uppercase; letter-spacing:0.13em; color:var(--gold); margin-bottom:9px;
+    }
+    .finalBox{
+      margin:0; color:var(--text2); white-space:pre-wrap;
+      font-family:'Geist Mono',monospace; font-size:12px; font-weight:300;
+      line-height:1.65; letter-spacing:0.01em;
+    }
+    .finalOut{
+      margin-top:12px; padding:12px 14px; border-radius:var(--r-sm);
+      border:1px solid rgba(201,168,76,.22); background:rgba(201,168,76,.045);
+      color:var(--text2); font-family:'Geist Mono',monospace;
+      white-space:pre-wrap; font-size:12px; font-weight:300;
+    }
+    .finalOut .title{
+      font-size:10px; font-weight:500; letter-spacing:0.12em;
+      text-transform:uppercase; margin-bottom:8px; color:var(--gold);
+    }
+
+    ::-webkit-scrollbar{ width:5px; height:5px; }
+    ::-webkit-scrollbar-track{ background:transparent; }
+    ::-webkit-scrollbar-thumb{ background:rgba(255,248,235,.1); border-radius:3px; }
+    ::-webkit-scrollbar-thumb:hover{ background:rgba(255,248,235,.17); }
+
+    /* Exclusive group — chips styled as radio pills */
+    [data-exclusive="true"] .chip[data-w="1"]{
+      border-color: var(--border-gold);
+      background: var(--gold-dim);
+      color: var(--gold-light);
+      font-weight:500;
+    }
+    [data-exclusive="true"] .chip[data-w="1"]::after{ content:''; }
+
+    /* Override weight badge hidden for exclusive */
+    [data-exclusive="true"] .chip{ padding-right:11px !important; }
+
+    /* Main motif group highlight */
+    .group-anchor{ border-color:var(--border-gold) !important; background:rgba(201,168,76,.04) !important; }
+
+    /* Two-col chip grid inside a group */
+    .chip-grid{ display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+    .chip-grid .chip{ width:100%; }
+
+    /* ── Tabs ──────────────────────────────────────────── */
+    .tabs{
+      display:flex; gap:2px;
+      padding: 4px;
+      background: rgba(255,248,235,.03);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      margin-bottom: 16px;
+    }
+    .tab-btn{
+      flex:1; padding:8px 14px;
+      border:none; border-radius:5px;
+      background:transparent; color:var(--muted2);
+      font-family:'Geist',sans-serif; font-size:12px; font-weight:500;
+      letter-spacing:0.03em; cursor:pointer;
+      transition: background .15s, color .15s;
+    }
+    .tab-btn:hover{ color:var(--text); background:rgba(255,248,235,.04); }
+    .tab-btn.active{
+      background: var(--panel2);
+      color: var(--gold-light);
+      border: 1px solid var(--border-gold);
+    }
+    .tab-panel{ display:none; }
+    .tab-panel.active{ display:block; }
+
+    /* ── Zielgruppen-Grid ──────────────────────────────── */
+    .audience-grid{
+      display:grid; grid-template-columns:1fr 1fr; gap:9px;
+    }
+    .audience-card{
+      border:1px solid var(--border);
+      border-radius:var(--r-sm);
+      padding:13px 14px;
+      cursor:pointer;
+      background:rgba(255,248,235,.015);
+      transition: border-color .15s, background .15s;
+      user-select:none;
+    }
+    .audience-card:hover{
+      border-color:var(--border-mid);
+      background:rgba(255,248,235,.035);
+    }
+    .audience-card.selected{
+      border-color:var(--border-gold);
+      background:var(--gold-dim);
+    }
+    .audience-icon{ font-size:22px; margin-bottom:6px; display:block; }
+    .audience-name{
+      font-size:12px; font-weight:600; color:var(--text2);
+      letter-spacing:0.01em; margin-bottom:3px;
+    }
+    .audience-card.selected .audience-name{ color:var(--gold-light); }
+    .audience-desc{
+      font-size:11px; color:var(--muted); line-height:1.4; font-weight:300;
+    }
+    .audience-tokens-preview{
+      margin-top:6px;
+      font-family:'Geist Mono',monospace;
+      font-size:10px; color:var(--muted);
+      line-height:1.4;
+    }
+    .audience-card.selected .audience-tokens-preview{ color:var(--gold); opacity:.8; }
+
+    .audience-active-badge{
+      display:none;
+      margin-top:12px; padding:10px 13px;
+      background:var(--gold-dim);
+      border:1px solid var(--border-gold);
+      border-radius:var(--r-sm);
+      font-size:12px; color:var(--gold-light);
+      font-weight:500;
+    }
+    .audience-active-badge.show{ display:block; }
+    .audience-active-badge span{
+      font-family:'Geist Mono',monospace;
+      font-size:11px; font-weight:300;
+      color:var(--text2);
+    }
+
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:20px;">
+        <div>
+          <div style="display:flex; align-items:baseline; gap:0">
+            <h1>Prompti</h1>
+            <span class="tagline">Adventskalender · v6</span>
+          </div>
+          <p class="sub">Midjourney Prompt Compiler — Grundidee Anker #1, Stil direkt danach</p>
+        </div>
+        <div class="pill">
+          <span class="kbd">C</span> kopieren
+          <span style="color:var(--border-hi)">·</span>
+          <span class="kbd">R</span> reset
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+
+      <!-- ════════════════════════════════ LEFT COLUMN ═══════════════════════════════ -->
+      <section class="card">
+        <div class="hd">
+          <div class="hd-bar"></div>
+          <div class="hd-label">Motiv-Einstellungen</div>
+        </div>
+        <div class="bd">
+
+          <!-- ── TABS ─────────────────────────────────────── -->
+          <div class="tabs">
+            <button class="tab-btn active" data-tab="motiv">Motiv & Stil</button>
+            <button class="tab-btn" data-tab="zielgruppe">Zielgruppe</button>
+          </div>
+
+          <!-- ══════════════ TAB: MOTIV & STIL ══════════════ -->
+          <div class="tab-panel active" id="tab-motiv">
+          <div class="printTip">
+            <strong>Tipp:</strong> Grundidee = Anker Token #1. Hauptstil folgt direkt danach. Für Kalender: <strong>--quality 2 · --v 6.1 · 3:4 oder 4:5</strong>
+          </div>
+
+          <!-- ── TEMPLATE BAR ─────────────────────────────── -->
+          <div class="templateBar">
+            <div class="row">
+              <div style="flex:1"><select id="templateSelect"><option value="">Vorlage auswählen…</option></select></div>
+              <button class="btn" id="loadTemplate">Laden</button>
+              <button class="btn danger" id="deleteTemplate">Löschen</button>
+            </div>
+            <div class="row">
+              <div style="flex:1"><input type="text" id="templateName" placeholder="Name für neue Vorlage…" /></div>
+              <button class="btn primary" id="saveTemplate">Speichern</button>
+            </div>
+            <div class="row">
+              <button class="btn" id="exportTemplates">↓ Exportieren</button>
+              <button class="btn" id="importTemplates">↑ Importieren</button>
+              <input type="file" id="importFile" accept=".json" style="display:none" />
+            </div>
+          </div>
+
+          <!-- ── GRUNDIDEE ─────────────────────────────────── -->
+          <div class="group" style="border-color:var(--border-gold); background:rgba(201,168,76,.04)">
+            <div class="groupTitle" style="color:var(--gold)">① Grundidee — Anker</div>
+            <input id="motif" type="text" placeholder="z.B. cozy christmas village · festive winter portrait · magical advent calendar" />
+
+            <div style="height:14px"></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <div>
+                <div class="tiny">Motiv-Cluster</div>
+                <select id="motifCluster">
+                  <option value="">– kein Cluster –</option>
+                  <optgroup label="Klassisch / Winterwelt">
+                    <option value="winter_classic">Winterlandschaft & Weihnacht</option>
+                  </optgroup>
+                  <optgroup label="Figuren & Humor">
+                    <option value="figures_classic">Klassische Figuren</option>
+                    <option value="humor_modern">Modern / humorvoll</option>
+                  </optgroup>
+                  <optgroup label="Business / Branchen">
+                    <option value="business_team">Office & Team</option>
+                    <option value="industry_pattern">Branchen-Streudruck</option>
+                  </optgroup>
+                </select>
+              </div>
+              <div>
+                <div class="tiny">Design Family</div>
+                <select id="designFamily">
+                  <option value="">– keine Family –</option>
+                  <option value="premium">Premium Minimal Luxury</option>
+                  <option value="scandi">Nature Nordic Calm</option>
+                  <option value="cozy">Cozy / Homemade</option>
+                  <option value="candy">Bold Fun / Candy Pop</option>
+                  <option value="storybook">Illustrative Storybook</option>
+                  <option value="beauty">Beauty / Selfcare</option>
+                  <option value="culinary">Food / Culinary</option>
+                  <option value="retro">Retro 80/90s</option>
+                  <option value="anti">Irony / Anti-Christmas</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="height:12px"></div>
+            <div style="display:grid; grid-template-columns:1fr auto; gap:10px; align-items:end">
+              <div>
+                <div class="tiny">Wesen im Bild</div>
+                <select id="beingsMode">
+                  <option value="none">Ohne Personen / Tiere / Figuren</option>
+                  <option value="people">Mit Personen</option>
+                  <option value="animals">Mit Tieren</option>
+                  <option value="characters">Mit Figuren / Characters</option>
+                  <option value="both">Mit Personen &amp; Tieren</option>
+                </select>
+              </div>
+              <button id="motifReroll" class="btn" type="button">🎲 Würfeln</button>
+            </div>
+            <div id="motifTokenLabel" style="margin-top:8px; font-family:'Geist Mono',monospace; font-size:11px; color:var(--muted); min-height:16px;"></div>
+            <input id="motifToken" type="hidden" value="" />
+          </div>
+
+          <!-- ── HAUPTSTIL — EXKLUSIV ──────────────────────── -->
+          <div class="group">
+            <div class="groupTitle">② Hauptstil <span style="font-weight:300;opacity:.5;margin-left:4px;font-size:9px">nur 1</span></div>
+            <div class="chipbar" data-group="mainStyle" data-exclusive="true">
+              <span class="chip" data-token="storybook christmas illustration">Bilderbuch</span>
+              <span class="chip" data-token="vintage advent calendar illustration">Vintage Adventskalender</span>
+              <span class="chip" data-token="classic european christmas card illustration">Weihnachtskarte</span>
+              <span class="chip" data-token="hand-painted watercolor illustration">Aquarell</span>
+              <span class="chip" data-token="gouache illustration">Gouache</span>
+              <span class="chip" data-token="colored pencil illustration">Buntstift</span>
+              <span class="chip" data-token="modern clean digital illustration">Digital-Illustration</span>
+              <span class="chip" data-token="minimal scandinavian christmas illustration">Skandinavisch minimal</span>
+              <span class="chip" data-token="realistic photography, natural lighting, detailed">Foto-Look</span>
+              <span class="chip" data-token="hyperrealistic photography, ultra detailed, cinematic lighting">Hyperrealistic</span>
+              <span class="chip" data-token="crochet knitted wool christmas illustration">Häkel / Wolle</span>
+              <span class="chip" data-token="claymation plasticine stop-motion christmas illustration">Claymation</span>
+              <span class="chip" data-token="paper cutout christmas illustration">Papercut</span>
+              <span class="chip" data-token="retro christmas postcard illustration">Retro Postkarte</span>
+            </div>
+          </div>
+
+          <!-- ── SZENE — EXKLUSIV ───────────────────────────── -->
+          <div class="group">
+            <div class="groupTitle">Szene <span style="font-weight:300;opacity:.5;margin-left:4px;font-size:9px">nur 1</span></div>
+            <div class="chipbar" data-group="scene" data-exclusive="true">
+              <span class="chip" data-token="magical european christmas village">Weihnachtsdorf</span>
+              <span class="chip" data-token="festive market square">Marktplatz</span>
+              <span class="chip" data-token="cozy alpine winter scene">Alpen-Winter</span>
+              <span class="chip" data-token="snowy forest cabin in winter">Waldhütte</span>
+              <span class="chip" data-token="warm living room with christmas tree">Wohnzimmer</span>
+              <span class="chip" data-token="advent calendar layout with numbered doors">Adventskalender-Layout</span>
+              <span class="chip" data-token="christmas still life with gifts and ornaments">Stillleben</span>
+              <span class="chip" data-token="portrait of a christmas character">Portrait</span>
+              <span class="chip" data-token="selfie style christmas photo">Selfie</span>
+              <span class="chip" data-token="group portrait in christmas setting">Gruppenportrait</span>
+            </div>
+          </div>
+
+          <!-- ── WETTER & LICHT ─────────────────────────────── -->
+          <div class="group">
+            <div class="groupTitle">Wetter & Licht</div>
+            <div class="chipbar" data-group="weather">
+              <span class="chip" data-token="sunny winter day">Sonnig</span>
+              <span class="chip" data-token="overcast winter sky">Bewölkt</span>
+              <span class="chip" data-token="foggy winter morning">Neblig</span>
+              <span class="chip" data-token="light snowfall">Leichter Schnee</span>
+              <span class="chip" data-token="heavy snowfall">Starker Schnee</span>
+              <span class="chip" data-token="icy frosty atmosphere">Eisig / Frost</span>
+              <span class="chip" data-token="warm candlelight glow">Kerzenlicht</span>
+              <span class="chip" data-token="soft winter sunlight">Weiches Licht</span>
+              <span class="chip" data-token="starry winter night">Sternennacht</span>
+            </div>
+          </div>
+
+          <!-- ── ZWEI SPALTEN: DETAILGRAD + FARBE ─────────── -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:11px;">
+            <div class="group">
+              <div class="groupTitle">Detailgrad</div>
+              <div class="chipbar" data-group="detail">
+                <span class="chip" data-token="clean illustration style">Clean</span>
+                <span class="chip" data-token="minimal line detail">Minimal</span>
+                <span class="chip" data-token="ultra detailed illustration">Ultra Detail</span>
+                <span class="chip" data-token="highly intricate linework">Feine Linien</span>
+                <span class="chip" data-token="rough sketch texture">Skizzenhaft</span>
+                <span class="chip" data-token="hand drawn imperfect lines">Handgezeichnet</span>
+                <span class="chip" data-token="dense ornamental detail">Ornamental</span>
+                <span class="chip" data-token="soft painterly detail">Malerisch</span>
+              </div>
+            </div>
+            <div class="group">
+              <div class="groupTitle">Farbpalette <span style="font-weight:300;opacity:.5;margin-left:4px;font-size:9px">nur 1</span></div>
+              <div class="chipbar" data-group="colors" data-exclusive="true">
+                <span class="chip" data-token="traditional red and green palette">Rot-Grün</span>
+                <span class="chip" data-token="warm earthy tones">Erdtöne</span>
+                <span class="chip" data-token="deep winter blues">Winterblau</span>
+                <span class="chip" data-token="soft pastel palette">Pastell</span>
+                <span class="chip" data-token="muted vintage color palette">Vintage</span>
+                <span class="chip" data-token="gold accents and warm highlights">Gold</span>
+                <span class="chip" data-token="cool whites and silver tones">Weiß & Silber</span>
+                <span class="chip" data-token="rich jewel tones">Juwelen</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── KOMPOSITION — EXKLUSIV ────────────────────── -->
+          <div class="group">
+            <div class="groupTitle">Komposition <span style="font-weight:300;opacity:.5;margin-left:4px;font-size:9px">nur 1</span></div>
+            <div class="chipbar" data-group="composition" data-exclusive="true">
+              <span class="chip" data-token="centered portrait composition">Zentriert</span>
+              <span class="chip" data-token="symmetrical poster layout">Symmetrisch</span>
+              <span class="chip" data-token="top down flatlay composition">Flatlay</span>
+              <span class="chip" data-token="isometric christmas village view">Isometrisch</span>
+              <span class="chip" data-token="close-up object composition">Nahaufnahme</span>
+              <span class="chip" data-token="wide establishing shot">Totale</span>
+              <span class="chip" data-token="foreground subject with background scene">Vordergrund + BG</span>
+              <span class="chip" data-token="layered depth foreground middle background">Mehrere Ebenen</span>
+              <span class="chip" data-token="decorative border frame composition">Rahmen</span>
+            </div>
+          </div>
+
+          <!-- ── ZWEI SPALTEN: ELEMENTE + FIGUREN ─────────── -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:11px;">
+            <div class="group">
+              <div class="groupTitle">Elemente</div>
+              <div class="chipbar" data-group="elements">
+                <span class="chip" data-token="christmas tree">Weihnachtsbaum</span>
+                <span class="chip" data-token="wrapped gifts">Geschenke</span>
+                <span class="chip" data-token="christmas ornaments">Kugeln</span>
+                <span class="chip" data-token="candles and pine branches">Kerzen & Tanne</span>
+                <span class="chip" data-token="gingerbread house">Lebkuchenhaus</span>
+                <span class="chip" data-token="string lights bokeh">Lichterkette</span>
+                <span class="chip" data-token="snow covered rooftops">Verschneite Dächer</span>
+                <span class="chip" data-token="hot cocoa and cookies">Kakao & Kekse</span>
+              </div>
+            </div>
+            <div class="group">
+              <div class="groupTitle">Figuren</div>
+              <div class="chipbar" data-group="characters">
+                <span class="chip" data-token="santa claus">Weihnachtsmann</span>
+                <span class="chip" data-token="reindeer">Rentier</span>
+                <span class="chip" data-token="snowman">Schneemann</span>
+                <span class="chip" data-token="christmas elf">Wichtel</span>
+                <span class="chip" data-token="christmas angel">Engel</span>
+                <span class="chip" data-token="nutcracker figurine">Nussknacker</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── DEKO ───────────────────────────────────────── -->
+          <div class="group">
+            <div class="groupTitle">Weihnachts-Deko</div>
+            <div class="chipbar" data-group="decor">
+              <span class="chip" data-token="advent wreath with candles">Adventskranz</span>
+              <span class="chip" data-token="poinsettia christmas flower">Weihnachtsstern</span>
+              <span class="chip" data-token="candy cane">Zuckerstangen</span>
+              <span class="chip" data-token="christmas stocking hanging on fireplace">Strümpfe am Kamin</span>
+              <span class="chip" data-token="pine garland decoration">Tannengirlanden</span>
+              <span class="chip" data-token="straw star ornament">Strohsterne</span>
+              <span class="chip" data-token="falling snowflakes">Schneeflocken</span>
+              <span class="chip" data-token="frosted window glass">Frostige Fenster</span>
+              <span class="chip" data-token="footprints in fresh snow">Spuren im Schnee</span>
+              <span class="chip" data-token="icicles hanging from roof">Eiszapfen</span>
+              <span class="chip" data-token="snow covered pine branches">Schnee-Tanne</span>
+            </div>
+          </div>
+
+          <!-- ── PAPIER & TEXTUR — EXKLUSIV ────────────────── -->
+          <div class="group">
+            <div class="groupTitle">Papier & Textur <span style="font-weight:300;opacity:.5;margin-left:4px;font-size:9px">nur 1</span></div>
+            <div class="chipbar" data-group="paper" data-exclusive="true">
+              <span class="chip" data-token="matte coated paper texture">Matt gestrichen</span>
+              <span class="chip" data-token="uncoated offset paper texture">Offset</span>
+              <span class="chip" data-token="linen paper texture">Leinenpapier</span>
+              <span class="chip" data-token="canvas texture">Leinwand</span>
+              <span class="chip" data-token="cotton rag paper texture">Bütten</span>
+              <span class="chip" data-token="deckle edge handmade paper">Deckle Edge</span>
+              <span class="chip" data-token="letterpress print texture">Letterpress</span>
+              <span class="chip" data-token="embossed print texture">Prägung</span>
+              <span class="chip" data-token="metallic gold ink accents">Metallic Gold</span>
+              <span class="chip" data-token="metallic silver ink accents">Metallic Silber</span>
+            </div>
+          </div>
+
+          <!-- ── QUALITÄT ────────────────────────────────────── -->
+          <div class="group">
+            <div class="groupTitle">Qualität & Output</div>
+            <div class="chipbar" data-group="technical">
+              <span class="chip" data-token="high resolution illustration">High-Res</span>
+              <span class="chip" data-token="print ready artwork">Druckbereit</span>
+              <span class="chip" data-token="8k illustration">8K</span>
+              <span class="chip" data-token="poster quality render">Poster-Qualität</span>
+              <span class="chip" data-token="ultra sharp details">Ultra-scharf</span>
+              <span class="chip" data-token="clean vector-like edges">Vektor-Kanten</span>
+            </div>
+          </div>
+
+          <!-- ── MJ PARAMETER ──────────────────────────────── -->
+          <div class="group">
+            <div class="groupTitle">Midjourney Parameter</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <div>
+                <div class="tiny">Seitenverhältnis</div>
+                <select id="ar">
+                  <option value="3:4" selected>3:4 — Portrait</option>
+                  <option value="4:5">4:5 — Portrait hoch</option>
+                  <option value="2:3">2:3 — Portrait klassisch</option>
+                  <option value="1:1">1:1 — Quadrat</option>
+                  <option value="4:3">4:3 — Landscape</option>
+                  <option value="16:9">16:9 — Landscape breit</option>
+                </select>
+              </div>
+              <div>
+                <div class="tiny">Version</div>
+                <select id="v">
+                  <option value="6.1" selected>6.1 — Aktuell</option>
+                  <option value="6.0">6.0</option>
+                  <option value="5.2">5.2</option>
+                </select>
+              </div>
+              <div>
+                <div class="tiny">Style Mode</div>
+                <select id="mjStyle">
+                  <option value="raw" selected>Raw — Fotorealistisch</option>
+                  <option value="default">Default — Künstlerisch</option>
+                </select>
+              </div>
+              <div>
+                <div class="tiny">Quality</div>
+                <select id="quality">
+                  <option value="2" selected>2 — Höchste</option>
+                  <option value="1">1 — Standard</option>
+                  <option value="0.5">0.5 — Schnell</option>
+                </select>
+              </div>
+              <div>
+                <div class="tiny">Stylize (0–1000)</div>
+                <input type="number" id="stylize" min="0" max="1000" value="100" />
+              </div>
+              <div>
+                <div class="tiny">Chaos (0–100)</div>
+                <input type="number" id="chaos" min="0" max="100" value="0" />
+              </div>
+              <div>
+                <div class="tiny">Stop (10–100)</div>
+                <input type="number" id="stop" min="10" max="100" value="" placeholder="–" />
+              </div>
+              <div>
+                <div class="tiny">Weird (0–3000)</div>
+                <input type="number" id="weird" min="0" max="3000" value="0" />
+              </div>
+              <div>
+                <div class="tiny">Seed</div>
+                <input type="text" id="seed" placeholder="optional…" value="" />
+              </div>
+              <div>
+                <div class="tiny">Tile</div>
+                <select id="tile">
+                  <option value="off" selected>Aus</option>
+                  <option value="on">An — Nahtloses Muster</option>
+                </select>
+              </div>
+            </div>
+            <div style="height:10px"></div>
+            <div class="tiny">Negative Prompt (--no)</div>
+            <input type="text" id="exclude" placeholder="z.B. people, text, watermark" value="" />
+          </div>
+
+          </div><!-- /tab-panel motiv -->
+
+          <!-- ══════════════ TAB: ZIELGRUPPE ════════════════ -->
+          <div class="tab-panel" id="tab-zielgruppe">
+
+            <div class="printTip">
+              Wähle eine <strong>Zielgruppe</strong> — branchenspezifische Klischee-Tokens werden automatisch in den Prompt eingeflochten.
+            </div>
+
+            <div id="audienceBadge" class="audience-active-badge">
+              Aktiv: <strong id="audienceActiveName"></strong><br>
+              <span id="audienceActiveTokens"></span>
+            </div>
+
+            <div style="height:12px"></div>
+
+            <div class="audience-grid" id="audienceGrid">
+
+              <div class="audience-card" data-audience="kfz">
+                <span class="audience-icon">🔧</span>
+                <div class="audience-name">KFZ / Automotive</div>
+                <div class="audience-desc">Werkstätten, Mechaniker, Autopflege</div>
+                <div class="audience-tokens-preview">mechanic workshop, vintage car, chrome wrench, motor oil…</div>
+              </div>
+
+              <div class="audience-card" data-audience="sanitaer">
+                <span class="audience-icon">🪠</span>
+                <div class="audience-name">Sanitär / Heizung</div>
+                <div class="audience-desc">Klempner, SHK-Betriebe, Heizungsbauer</div>
+                <div class="audience-tokens-preview">copper pipes, radiator, bathroom fixtures, plumber tools…</div>
+              </div>
+
+              <div class="audience-card" data-audience="elektriker">
+                <span class="audience-icon">⚡</span>
+                <div class="audience-name">Elektro / Elektrik</div>
+                <div class="audience-desc">Elektriker, Gebäudetechnik, E-Installationen</div>
+                <div class="audience-tokens-preview">glowing light bulb, circuit board, electrical cables, voltmeter…</div>
+              </div>
+
+              <div class="audience-card" data-audience="zimmerer">
+                <span class="audience-icon">🪚</span>
+                <div class="audience-name">Zimmerei / Holzbau</div>
+                <div class="audience-desc">Zimmerer, Tischler, Holzverarbeitung</div>
+                <div class="audience-tokens-preview">wooden beams, carpenter tools, sawdust, timber frame…</div>
+              </div>
+
+              <div class="audience-card" data-audience="baecker">
+                <span class="audience-icon">🥐</span>
+                <div class="audience-name">Bäckerei / Konditorei</div>
+                <div class="audience-desc">Bäcker, Konditoren, Café-Betriebe</div>
+                <div class="audience-tokens-preview">fresh bread loaves, flour dusted counter, warm oven glow, pastry…</div>
+              </div>
+
+              <div class="audience-card" data-audience="gesundheit">
+                <span class="audience-icon">🏥</span>
+                <div class="audience-name">Gesundheitswesen</div>
+                <div class="audience-desc">Ärzte, Pflege, Krankenhäuser, Praxen</div>
+                <div class="audience-tokens-preview">stethoscope, medical cross, caring hands, hospital warmth…</div>
+              </div>
+
+              <div class="audience-card" data-audience="gastronomie">
+                <span class="audience-icon">🍽️</span>
+                <div class="audience-name">Gastronomie / Küche</div>
+                <div class="audience-desc">Köche, Restaurants, Catering</div>
+                <div class="audience-tokens-preview">chef's hat, sizzling pan, fresh ingredients, kitchen steam…</div>
+              </div>
+
+              <div class="audience-card" data-audience="logistik">
+                <span class="audience-icon">🚛</span>
+                <div class="audience-name">Logistik / Transport</div>
+                <div class="audience-desc">Speditionen, Paketdienste, Fuhrpark</div>
+                <div class="audience-tokens-preview">delivery truck, cardboard boxes, warehouse, forklift…</div>
+              </div>
+
+              <div class="audience-card" data-audience="landwirtschaft">
+                <span class="audience-icon">🌾</span>
+                <div class="audience-name">Landwirtschaft</div>
+                <div class="audience-desc">Bauernhöfe, Agrar, Gärtnerei</div>
+                <div class="audience-tokens-preview">tractor in snowy field, hay bale, farmhouse, winter barn…</div>
+              </div>
+
+              <div class="audience-card" data-audience="it">
+                <span class="audience-icon">💻</span>
+                <div class="audience-name">IT / Tech</div>
+                <div class="audience-desc">Software, Entwickler, IT-Dienstleister</div>
+                <div class="audience-tokens-preview">glowing screen, code lines, server room, keyboard glow…</div>
+              </div>
+
+              <div class="audience-card" data-audience="friseur">
+                <span class="audience-icon">✂️</span>
+                <div class="audience-name">Friseur / Beauty</div>
+                <div class="audience-desc">Salons, Kosmetik, Hair & Beauty</div>
+                <div class="audience-tokens-preview">scissors, mirror, styling brush, beauty salon ambiance…</div>
+              </div>
+
+              <div class="audience-card" data-audience="immobilien">
+                <span class="audience-icon">🏠</span>
+                <div class="audience-name">Immobilien / Bau</div>
+                <div class="audience-desc">Makler, Bauunternehmen, Architektur</div>
+                <div class="audience-tokens-preview">cozy house in snow, blueprint, construction helmet, keys…</div>
+              </div>
+
+              <div class="audience-card" data-audience="sport">
+                <span class="audience-icon">🏋️</span>
+                <div class="audience-name">Sport / Fitness</div>
+                <div class="audience-desc">Fitnessstudios, Sportvereine, Trainer</div>
+                <div class="audience-tokens-preview">dumbbells, gym equipment, active lifestyle, team spirit…</div>
+              </div>
+
+              <div class="audience-card" data-audience="legal">
+                <span class="audience-icon">⚖️</span>
+                <div class="audience-name">Recht / Steuer</div>
+                <div class="audience-desc">Kanzleien, Steuerberater, Notare</div>
+                <div class="audience-tokens-preview">law books, scales of justice, wooden gavel, formal desk…</div>
+              </div>
+
+            </div><!-- /audience-grid -->
+
+          </div><!-- /tab-panel zielgruppe -->
+
+        </div>
+      </section>
+
+      <!-- ════════════════════════════════ RIGHT COLUMN ══════════════════════════════ -->
+      <aside>
+        <div class="card" style="position:sticky; top:72px;">
+          <div class="hd">
+            <div class="hd-bar"></div>
+            <div class="hd-label">Output</div>
+          </div>
+          <div class="bd">
+
+            <div id="warnings" class="warnings"></div>
+            <div class="anchor-label">① Grundidee · ② Stil · ③ Rest · ④ Parameter</div>
+
+            <textarea id="out" class="mono" spellcheck="false" placeholder="Dein Prompt wird hier automatisch generiert…" style="min-height:220px;"></textarea>
+
+            <div style="height:10px"></div>
+            <button id="btnPrepare" class="btn action" onclick="onPrepareClick()" style="width:100%">Aufbereiten — MJ-Final</button>
+
+            <div id="finalWrap" class="finalWrap" style="display:none; margin-top:12px;">
+              <div class="finalTitle">✓ Final — Midjourney-optimiert</div>
+              <div id="finalBox" class="finalBox"></div>
+            </div>
+
+            <div style="height:14px"></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:9px;">
+              <button class="btn primary" id="copy" style="width:100%; display:none;">↗ In MJ kopieren</button>
+              <button class="btn" id="reset" style="width:100%">Zurücksetzen</button>
+            </div>
+
+          </div>
+        </div>
+      </aside>
+
+    </div>
+    <div class="toast" id="toast">OK</div>
+  </main>
+<script>
+(function(){
+  const KEY = 'advent-calendar-builder-v2';
+  const TEMPLATE_KEY = 'advent-calendar-templates-v2';
+  const $ = (id) => document.getElementById(id);
+
+  // ── ZIELGRUPPEN-DATEN ─────────────────────────────────────────────────────
+  const AUDIENCES = {
+    kfz: {
+      name: 'KFZ / Automotive',
+      tokens: [
+        'vintage automobile workshop', 'chrome wrench and ratchet tools',
+        'motor oil and grease aesthetic', 'car parts and gears decoration',
+        'mechanic garage with christmas lights', 'automotive industry christmas'
+      ]
+    },
+    sanitaer: {
+      name: 'Sanitär / Heizung',
+      tokens: [
+        'copper pipes and fittings decoration', 'radiator warmth and heating',
+        'bathroom fixtures in festive setting', 'plumber tools as christmas ornaments',
+        'cozy warm home heating christmas', 'SHK handcraft christmas'
+      ]
+    },
+    elektriker: {
+      name: 'Elektro / Elektrik',
+      tokens: [
+        'glowing light bulbs as christmas lights', 'circuit board christmas pattern',
+        'electrical cables and connectors', 'voltmeter and tools decoration',
+        'energy and electricity christmas', 'bright electro illuminated christmas'
+      ]
+    },
+    zimmerer: {
+      name: 'Zimmerei / Holzbau',
+      tokens: [
+        'wooden timber beams and christmas', 'carpenter tools hanging as decoration',
+        'wood shavings and sawdust texture', 'warm wooden cabin interior',
+        'handcrafted wooden ornaments', 'timber frame construction christmas'
+      ]
+    },
+    baecker: {
+      name: 'Bäckerei / Konditorei',
+      tokens: [
+        'fresh baked bread loaves and pastries', 'flour dusted wooden counter',
+        'warm oven glow bakery christmas', 'gingerbread and stollen',
+        'croissants and christmas cookies', 'artisan bakery cozy atmosphere'
+      ]
+    },
+    gesundheit: {
+      name: 'Gesundheitswesen',
+      tokens: [
+        'stethoscope as christmas decoration', 'caring hands and medical warmth',
+        'hospital corridor with christmas lights', 'medical cross with holly wreath',
+        'healthcare team christmas celebration', 'healing and caring christmas'
+      ]
+    },
+    gastronomie: {
+      name: 'Gastronomie / Küche',
+      tokens: [
+        'chef hat and wooden spoon christmas', 'sizzling pan with christmas steam',
+        'restaurant kitchen christmas decoration', 'fresh ingredients and herbs',
+        'gourmet christmas table setting', 'professional kitchen festive scene'
+      ]
+    },
+    logistik: {
+      name: 'Logistik / Transport',
+      tokens: [
+        'delivery truck in snowy landscape', 'cardboard boxes as christmas gifts',
+        'warehouse with christmas lights', 'forklift with christmas decoration',
+        'parcels and packages christmas', 'logistics network winter christmas'
+      ]
+    },
+    landwirtschaft: {
+      name: 'Landwirtschaft',
+      tokens: [
+        'tractor in snowy winter field', 'hay bale christmas decoration',
+        'farmhouse with snow and christmas lights', 'winter barn and livestock',
+        'frozen field and rural christmas', 'agricultural countryside christmas'
+      ]
+    },
+    it: {
+      name: 'IT / Tech',
+      tokens: [
+        'glowing computer screen christmas', 'code lines as christmas decoration',
+        'server room with christmas lights', 'keyboard and coffee developer christmas',
+        'digital pixel christmas art', 'technology innovation christmas'
+      ]
+    },
+    friseur: {
+      name: 'Friseur / Beauty',
+      tokens: [
+        'scissors and comb christmas decoration', 'beauty salon mirror with lights',
+        'styling brush and hair tools', 'salon chair with christmas ribbon',
+        'cosmetics and beauty christmas', 'glamour beauty parlor christmas'
+      ]
+    },
+    immobilien: {
+      name: 'Immobilien / Bau',
+      tokens: [
+        'cozy house in snowy winter landscape', 'construction helmet with christmas hat',
+        'blueprint and architectural christmas', 'house keys with christmas ribbon',
+        'new home handover christmas', 'real estate winter dream home'
+      ]
+    },
+    sport: {
+      name: 'Sport / Fitness',
+      tokens: [
+        'dumbbells decorated with christmas ribbon', 'gym equipment holiday decoration',
+        'team sport christmas celebration', 'fitness motivation winter sports',
+        'active lifestyle holiday season', 'sports club christmas spirit'
+      ]
+    },
+    legal: {
+      name: 'Recht / Steuer',
+      tokens: [
+        'law books with christmas decoration', 'scales of justice with holly',
+        'wooden gavel with christmas ribbon', 'formal office desk christmas',
+        'legal documents and festive season', 'elegant law firm christmas'
+      ]
+    }
+  };
+
+  // Active audience selection
+  let selectedAudience = null;
+
+  // ── TAB LOGIC ─────────────────────────────────────────────────────────────
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.getAttribute('data-tab');
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + target)?.classList.add('active');
+    });
+  });
+
+  // ── AUDIENCE CARD LOGIC ───────────────────────────────────────────────────
+  document.querySelectorAll('.audience-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const key = card.getAttribute('data-audience');
+      if(selectedAudience === key){
+        // deselect
+        selectedAudience = null;
+        card.classList.remove('selected');
+      } else {
+        document.querySelectorAll('.audience-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedAudience = key;
+      }
+      updateAudienceBadge();
+      liveUpdate();
+      saveState();
+    });
+  });
+
+  function updateAudienceBadge(){
+    const badge = document.getElementById('audienceBadge');
+    const nameEl = document.getElementById('audienceActiveName');
+    const tokensEl = document.getElementById('audienceActiveTokens');
+    if(!badge) return;
+    if(selectedAudience && AUDIENCES[selectedAudience]){
+      const a = AUDIENCES[selectedAudience];
+      badge.classList.add('show');
+      if(nameEl) nameEl.textContent = a.name;
+      if(tokensEl) tokensEl.textContent = a.tokens.slice(0,3).join(' · ') + '…';
+    } else {
+      badge.classList.remove('show');
+    }
+  }
+
+
+
+  const els = {
+    motif: $('motif'),
+    motifCluster: $('motifCluster'),
+    motifReroll: $('motifReroll'),
+    motifToken: $('motifToken'),
+    motifTokenLabel: $('motifTokenLabel'),
+    designFamily: $('designFamily'),
+        beingsMode: $('beingsMode'),
+    out: $('out'),
+    toast: $('toast'),
+    copy: $('copy'),
+    reset: $('reset'),
+
+    ar: $('ar'),
+    v: $('v'),
+    mjStyle: $('mjStyle'),
+    quality: $('quality'),
+    stylize: $('stylize'),
+    chaos: $('chaos'),
+    stop: $('stop'),
+    weird: $('weird'),
+    seed: $('seed'),
+    exclude: $('exclude'),
+    tile: $('tile'),
+
+    // Template management
+    templateName: $('templateName'),
+    templateSelect: $('templateSelect'),
+    saveTemplate: $('saveTemplate'),
+    loadTemplate: $('loadTemplate'),
+    deleteTemplate: $('deleteTemplate'),
+    exportTemplates: $('exportTemplates'),
+    importTemplates: $('importTemplates'),
+    importFile: $('importFile')
+  };
+
+  function chips(){ return Array.from(document.querySelectorAll('.chip')); }
+
+  function toast(msg){
+    if(!els.toast) return;
+    els.toast.textContent = msg;
+    els.toast.classList.add('show');
+    setTimeout(()=> els.toast.classList.remove('show'), 1800);
+  }
+
+  function selectedTokensByGroup(){
+    const out = {};
+    chips().forEach(c => {
+      const w = Number(c.getAttribute('data-w') || '0');
+      if(w === 0) return;
+      const tok = c.getAttribute('data-token');
+      if(!tok) return;
+      const g = c.closest('[data-group]');
+      if(!g) return;
+      const gn = g.getAttribute('data-group');
+      if(!out[gn]) out[gn] = [];
+      let val = tok;
+      if(w > 1) val = `(${tok}::${w})`;
+      out[gn].push(val);
+    });
+    return out;
+  }
+
+  function uniqKeepOrder(arr){
+    const out = [];
+    const seen = new Set();
+    for(const t of arr){
+      const k = (typeof t === 'string') ? t.toLowerCase().trim() : String(t);
+      if(seen.has(k)) continue;
+      seen.add(k);
+      out.push(t);
+    }
+    return out;
+  }
+
+  
+  // --- Design Families (Trend-Cluster) ---
+  const DESIGN_FAMILIES = {
+    premium: {
+      tokens: [
+        'minimal luxury packaging aesthetic',
+        'white and gold palette',
+        'embossed paper texture',
+        'soft studio lighting',
+        'high negative space'
+      ],
+      defaults: { stylize: '200', mjStyle: 'raw' }
+    },
+    scandi: {
+      tokens: [
+        'nature nordic calm',
+        'sage green and cream palette',
+        'natural paper texture',
+        'soft winter daylight'
+      ],
+      defaults: { stylize: '250', mjStyle: 'raw' }
+    },
+    cozy: {
+      tokens: [
+        'cozy homemade christmas',
+        'warm candle glow',
+        'wood and cinnamon tones',
+        'handmade texture'
+      ],
+      defaults: { stylize: '250', mjStyle: 'raw' }
+    },
+    candy: {
+      tokens: [
+        'bold fun christmas',
+        'bright candy colors',
+        'playful shapes',
+        '3d candy elements'
+      ],
+      defaults: { stylize: '120', mjStyle: 'raw' }
+    },
+    storybook: {
+      tokens: [
+        'illustrative storybook christmas',
+        'magical winter atmosphere',
+        'warm glowing windows',
+        'soft snowfall'
+      ],
+      defaults: { stylize: '350', mjStyle: 'raw' }
+    },
+    beauty: {
+      tokens: [
+        'beauty selfcare christmas',
+        'pastel palette',
+        'soft studio light',
+        'clean premium feel'
+      ],
+      defaults: { stylize: '150', mjStyle: 'raw' }
+    },
+    culinary: {
+      tokens: [
+        'food experience christmas',
+        'ingredients arranged neatly',
+        'warm kitchen light',
+        'appetizing product styling'
+      ],
+      defaults: { stylize: '120', mjStyle: 'raw' }
+    },
+    retro: {
+      tokens: [
+        'retro 80s 90s nostalgia',
+        'memphis pattern',
+        'neon accents',
+        'pop graphic shapes'
+      ],
+      defaults: { stylize: '80', mjStyle: 'raw' }
+    },
+    anti: {
+      tokens: [
+        'anti christmas humor',
+        'black and white high contrast',
+        'bold graphic poster'
+      ],
+      defaults: { stylize: '50', mjStyle: 'raw' }
+    }
+  };
+
+  // --- Motiv-Cluster (Content) ---
+  const MOTIF_CLUSTERS = {
+    winter_classic: [
+      'snowy winter landscape',
+      'festive winter lights',
+      'warm candles and christmas lights'
+    ],
+    figures_classic: [
+      'santa claus and reindeer',
+      'christmas elf workshop scene',
+      'happy santa character'
+    ],
+    humor_modern: [
+      'christmas loading bar',
+      'ugly christmas socks',
+      'sarcastic modern christmas motif'
+    ],
+    business_team: [
+      'office christmas teamwork scene',
+      'corporate after-work christmas celebration',
+      'team meeting with subtle christmas decor'
+    ],
+    industry_pattern: [
+      'logistics themed christmas icon pattern',
+      'conference themed holiday icon pattern',
+      'industry scatter print christmas pattern'
+    ]
+  };
+
+  function pick(arr){
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function setMotifTokenFromCluster(force=false){
+    if(!els.motifCluster || !els.motifToken) return;
+    const key = (els.motifCluster.value || '').trim();
+    if(!key){
+      els.motifToken.value = '';
+      if(els.motifTokenLabel) els.motifTokenLabel.textContent = '–';
+      return;
+    }
+    const list = MOTIF_CLUSTERS[key] || [];
+    if(list.length === 0) return;
+
+    // If we already have a token and not forcing, keep it.
+    if(!force && els.motifToken.value) {
+      if(els.motifTokenLabel) els.motifTokenLabel.textContent = els.motifToken.value;
+      return;
+    }
+
+    els.motifToken.value = pick(list);
+    if(els.motifTokenLabel) els.motifTokenLabel.textContent = els.motifToken.value;
+  }
+
+  function applyDesignFamilyDefaults(){
+    if(!els.designFamily) return;
+    const key = (els.designFamily.value || '').trim();
+    const fam = DESIGN_FAMILIES[key];
+    if(!fam || !fam.defaults) return;
+    if(els.stylize && fam.defaults.stylize != null) els.stylize.value = fam.defaults.stylize;
+    if(els.mjStyle && fam.defaults.mjStyle != null) els.mjStyle.value = fam.defaults.mjStyle;
+  }
+
+
+
+  // --- MJ Prompt-Compiler (Konflikte automatisch lösen vor dem Kopieren) ---
+  function clearWarnings(){
+    const box = document.getElementById('warnings');
+    if(!box) return;
+    box.innerHTML = '';
+  }
+  function addWarning(msg){
+    const box = document.getElementById('warnings');
+    if(!box) return;
+    const d = document.createElement('div');
+    d.className = 'w';
+    d.textContent = msg;
+    box.appendChild(d);
+  }
+  function norm(s){ return (s||'').toLowerCase(); }
+  function hasToken(arr, needle){
+    const n = norm(needle);
+    return arr.some(t => norm(t).includes(n));
+  }
+  function removeIf(arr, pred){
+    return arr.filter(t => !pred(norm(t)));
+  }
+  function uniq(arr){
+    const out = [];
+    const seen = new Set();
+    for(const x of arr){
+      const k = (x||'').trim();
+      if(!k) continue;
+      const key = k.toLowerCase();
+      if(seen.has(key)) continue;
+      seen.add(key);
+      out.push(k);
+    }
+    return out;
+  }
+
+  // ca. 25 Regeln – pragmatisch für MJ/Design-Workflows
+  
+  // --- MJ Prompt-Compiler v2: Intent → Konflikte lösen → finalisieren ---
+  function detectIntent(tokens){
+    const t = norm(tokens.join(' '));
+    if(t.includes('pattern') || t.includes('scatter') || t.includes('streudruck') || t.includes('seamless')) return 'pattern';
+    if(t.includes('poster') || t.includes('graphic poster') || t.includes('bold graphic')) return 'poster';
+    if(t.includes('portrait')) return 'portrait';
+    if(t.includes('packaging') || t.includes('product')) return 'product';
+    return 'scene';
+  }
+
+  function pickPrimaryEnvironment(tokens){
+    const env = [
+      'office','workplace','meeting',
+      'village','street','town','city',
+      'kitchen','living room','room','interior',
+      'forest','mountain','cabin',
+      'workshop','factory','warehouse'
+    ];
+    const found = [];
+    for(const e of env){
+      if(tokens.some(t => norm(t).includes(e))) found.push(e);
+    }
+    return found.length ? found[0] : '';
+  }
+
+  function resolveEnvironment(tokens, intent){
+    // Bei Pattern/Poster/Product: Environment eher raus
+    if(intent === 'pattern' || intent === 'poster' || intent === 'product'){
+      const removed = tokens.filter(t => {
+        const n = norm(t);
+        return n.includes('office') || n.includes('village') || n.includes('street') || n.includes('kitchen') ||
+               n.includes('living room') || n.includes('room') || n.includes('interior') || n.includes('forest') ||
+               n.includes('mountain') || n.includes('cabin') || n.includes('workshop') || n.includes('warehouse') || n.includes('factory');
+      });
+      const kept = tokens.filter(t => !removed.includes(t));
+      return { tokens: kept, removed, keptEnv: '' };
+    }
+
+    // Scene/Portrait: nur EIN Environment behalten
+    const primary = pickPrimaryEnvironment(tokens);
+    if(!primary) return { tokens, removed: [], keptEnv: '' };
+
+    const envWords = [
+      'office','workplace','meeting','village','street','town','city',
+      'kitchen','living room','room','interior','forest','mountain','cabin',
+      'workshop','factory','warehouse'
+    ];
+
+    const removed = [];
+    const out = [];
+    for(const tok of tokens){
+      const n = norm(tok);
+      const isEnv = envWords.some(w => n.includes(w));
+      if(isEnv && !n.includes(primary)){
+        removed.push(tok);
+        continue;
+      }
+      out.push(tok);
+    }
+    return { tokens: out, removed, keptEnv: primary };
+  }
+
+  function detectPipeline(tokens){
+    const t = tokens.map(norm).join(' ');
+    const photo = t.includes('photography') || t.includes('hyperrealistic') || t.includes('photo') || t.includes('lens');
+    const vector = t.includes('vector') || t.includes('flat design') || t.includes('icon');
+    const handmade = t.includes('clay') || t.includes('claymation') || t.includes('knit') || t.includes('crochet') || t.includes('felt') || t.includes('paper cut') || t.includes('embroidery');
+    const illustr = t.includes('illustration') || t.includes('storybook') || t.includes('digital painting') || t.includes('concept art');
+
+    // Priorität: Handmade > Photo > Vector > Illustration (für Weihnachts-Designs stabil)
+    if(handmade) return 'handmade';
+    if(photo) return 'photo';
+    if(vector) return 'vector';
+    if(illustr) return 'illustration';
+    return 'neutral';
+  }
+
+  // Scene presets: make "scene" drive camera/composition defaults (Midjourney-friendly)
+  const SCENE_PRESETS = {
+    selfie: [
+      "phone camera selfie perspective",
+      "arm's-length viewpoint",
+      "wide-angle lens",
+      "slight fisheye distortion",
+      "off-center framing",
+      "handheld snapshot feel",
+      "characters close to camera"
+    ],
+    group: [
+      "group portrait composition",
+      "balanced framing",
+      "layered depth"
+    ],
+    portrait: [
+      "portrait composition",
+      "waist-up framing",
+      "soft background blur"
+    ],
+    advent: [
+      "advent calendar layout with numbered doors",
+      "grid composition",
+      "space for doors"
+    ]
+  };
+
+  function applyScenePresets(tokens){
+    // tokens are strings; detect selected scene chips by keywords and inject presets
+    let t = Array.isArray(tokens) ? [...tokens] : [];
+    const joined = t.map(norm).join(" ");
+    const hasSelfie = /\bselfie\b/.test(joined);
+    const hasGroup = /group\s*portrait|gruppenportrait/.test(joined);
+    const hasPortrait = /\bportrait\b/.test(joined) && !hasGroup;
+    const hasAdventLayout = /advent\s*calendar\s*layout|adventskalender\-layout/.test(joined);
+
+    // Remove raw selfie token(s) so we don't fight pipeline filters
+    if(hasSelfie){
+      t = t.filter(x => !/selfie/i.test(x));
+      t.push(...SCENE_PRESETS.selfie);
+    }
+    if(hasGroup){
+      t.push(...SCENE_PRESETS.group);
+    } else if(hasPortrait){
+      t.push(...SCENE_PRESETS.portrait);
+    }
+    if(hasAdventLayout){
+      t.push(...SCENE_PRESETS.advent);
+    }
+
+    // de-dupe (case-insensitive), preserve order
+    const seen = new Set();
+    const out = [];
+    for(const x of t){
+      const xx = String(x||"").trim();
+      if(!xx) continue;
+      const key = xx.toLowerCase();
+      if(seen.has(key)) continue;
+      seen.add(key);
+      out.push(xx);
+    }
+    return out;
+  }
+
+function adaptPerspective(tokens, pipeline){
+    // Treat "selfie" as a composition/perspective, not as a photo pipeline requirement.
+    // If the current pipeline is handmade/illustration/vector, translate selfie into compatible wording.
+    const out = [];
+    for(const tok of tokens){
+      const n = norm(tok);
+      if(n.includes('selfie')){
+        if(pipeline === 'photo'){
+          // keep selfie vibe but avoid over-anchoring on the word "photo"
+          out.push(tok.replace(/\bphoto\b/gi,'shot'));
+        } else if(pipeline === 'handmade'){
+          out.push('close-up composition, characters close to camera, handheld perspective');
+        } else if(pipeline === 'illustration'){
+          out.push('selfie-style composition, close-up perspective');
+        } else if(pipeline === 'vector'){
+          out.push('close-up portrait composition');
+        } else {
+          out.push('close-up composition, handheld perspective');
+        }
+      } else {
+        out.push(tok);
+      }
+    }
+    return out;
+  }
+
+function enforcePipeline(tokens, pipeline){
+    const removed = [];
+    let out = [...tokens];
+
+    const drop = (pred) => {
+      const next = [];
+      for(const tok of out){
+        if(pred(norm(tok))){
+          removed.push(tok);
+        }else{
+          next.push(tok);
+        }
+      }
+      out = next;
+    };
+
+    if(pipeline === 'photo'){
+      drop(n => n.includes('illustration') || n.includes('storybook') || n.includes('vector') || n.includes('digital painting') || n.includes('concept art'));
+    } else if(pipeline === 'handmade'){
+      drop(n => n.includes('photography') || n.includes('photo') || n.includes('hyperrealistic') || n.includes('lens'));
+      // Clay -> stop motion hint
+      if(out.some(t => norm(t).includes('clay')) && !out.some(t => norm(t).includes('stop-motion'))){
+        out.push('stop-motion look');
+      }
+    } else if(pipeline === 'vector'){
+      drop(n => n.includes('photography') || n.includes('hyperrealistic') || n.includes('lens') || n.includes('digital painting'));
+    } else if(pipeline === 'illustration'){
+      drop(n => n.includes('photography') || n.includes('hyperrealistic') || n.includes('lens'));
+    }
+
+    return { tokens: out, removed };
+  }
+
+  function resolveCharacters(tokens, beingsMode){
+    const removed = [];
+    const out = [];
+    const nBeings = (beingsMode||'none').trim();
+
+    for(const tok of tokens){
+      const n = norm(tok);
+      const isChar = n.includes('santa') || n.includes('reindeer') || n.includes('snowman') || n.includes('elf') || n.includes('character');
+      const isPeople = n.includes('people') || n.includes('person') || n.includes('human') || n.includes('portrait');
+      const isAnimal = n.includes('animal') || n.includes('pet') || n.includes('reindeer');
+
+      if(nBeings === 'none' && (isChar || isPeople || isAnimal)){
+        removed.push(tok); continue;
+      }
+      if(nBeings === 'animals' && (isPeople || n.includes('human'))){
+        removed.push(tok); continue;
+      }
+      if(nBeings === 'people' && (isAnimal || n.includes('reindeer') || n.includes('pet'))){
+        removed.push(tok); continue;
+      }
+      out.push(tok);
+    }
+    return { tokens: out, removed };
+  }
+
+  function enforceIntent(tokens, intent){
+    let out = [...tokens];
+    const removed = [];
+
+    const drop = (pred) => {
+      const next = [];
+      for(const tok of out){
+        if(pred(norm(tok))){
+          removed.push(tok);
+        }else next.push(tok);
+      }
+      out = next;
+    };
+
+    if(intent === 'pattern'){
+      // Pattern = flach, Icons, keine Szene/Tiefe
+      drop(n =>
+        n.includes('landscape') || n.includes('village') || n.includes('street') || n.includes('forest') || n.includes('mountain') ||
+        n.includes('layered depth') || n.includes('foreground') || n.includes('middle background') || n.includes('depth of field') || n.includes('bokeh') ||
+        n.includes('kitchen') || n.includes('living room') || n.includes('office') || n.includes('room') || n.includes('interior')
+      );
+      if(!hasToken(out,'flat layout') && !hasToken(out,'flat lay')) out.push('flat layout');
+      if(!hasToken(out,'isolated')) out.push('isolated elements');
+      if(!hasToken(out,'repeating pattern') && !hasToken(out,'repeating')) out.push('repeating pattern');
+      if(!hasToken(out,'seamless')) out.push('seamless pattern');
+    }
+
+    if(intent === 'poster'){
+      // Poster: keine Fotografie/DoF/real world camera
+      drop(n => n.includes('photography') || n.includes('lens') || n.includes('depth of field') || n.includes('bokeh'));
+      if(!hasToken(out,'graphic poster')) out.push('graphic poster');
+    }
+
+    if(intent === 'product'){
+      // Product: eher clean backdrop, keine Dorf-Szene
+      drop(n => n.includes('village') || n.includes('street') || n.includes('landscape') || n.includes('forest') || n.includes('mountain'));
+      if(!hasToken(out,'studio lighting')) out.push('studio lighting');
+      if(!hasToken(out,'clean backdrop')) out.push('clean backdrop');
+    }
+
+    return { tokens: out, removed };
+  }
+
+  function compilePrompt(tokens, params, beingsMode){
+    let p = uniq(tokens);
+    let pr = [...params];
+    const notes = [];
+
+    const intent = detectIntent(p);
+    notes.push('INTENT: ' + intent);
+
+    // 1) Environment
+    const envRes = resolveEnvironment(p, intent);
+    p = envRes.tokens;
+    if(envRes.removed.length) notes.push('ENV bereinigt: entfernt → ' + envRes.removed.join(', '));
+    if(envRes.keptEnv) notes.push('ENV behalten: ' + envRes.keptEnv);
+
+    // 2) Wesen
+    const chRes = resolveCharacters(p, beingsMode);
+    p = chRes.tokens;
+    if(chRes.removed.length) notes.push('WESEN bereinigt: entfernt → ' + chRes.removed.join(', '));
+
+    // 3) Intent enforcement (Pattern/Poster/Product)
+    const intentRes = enforceIntent(p, intent);
+    p = intentRes.tokens;
+    if(intentRes.removed.length) notes.push('INTENT-Filter: entfernt → ' + intentRes.removed.join(', '));
+
+    // 4) Pipeline
+    p = applyScenePresets(p);
+    const pipe = detectPipeline(p);
+    notes.push('PIPELINE: ' + pipe);
+    p = adaptPerspective(p, pipe);
+    const pipeRes = enforcePipeline(p, pipe);
+    p = pipeRes.tokens;
+    if(pipeRes.removed.length) notes.push('PIPELINE-Filter: entfernt → ' + pipeRes.removed.join(', '));
+
+    // 5) Minimal vs ultra detailed
+    if((hasToken(p,'minimal') || hasToken(p,'scandinavian')) && (hasToken(p,'ultra detailed') || hasToken(p,'dense'))){
+      const before = p.length;
+      p = p.filter(t => {
+        const n = norm(t);
+        return !(n.includes('ultra detailed') || n.includes('dense'));
+      });
+      if(p.length != before) notes.push('Minimal aktiv → ultra detailed/dense entfernt.');
+    }
+
+    p = uniq(p);
+    return { parts: p, params: pr, notes };
+  }
+
+  // Backwards-Compat: alter Name
+  function resolveConflicts(tokens, params){
+    return compilePrompt(tokens, params, window.__beingsMode||'none');
+  }
+
+
+
+
+  // --- Finalizer: MJ-konform "aufbereiten" ---
+  function splitPromptAndParams(raw){
+    // Make robust against spaced dashes like "- - ar"
+    const s0 = (raw == null) ? '' : String(raw);
+    const s = s0.replace(/-\s*-\s*/g, '--').trim();
+    if(!s) return { prompt:'', params:'' };
+    const idx = s.indexOf('--');
+    if(idx === -1) return { prompt:s, params:'' };
+    return { prompt: s.slice(0, idx).trim(), params: s.slice(idx).trim() };
+  }
+
+  function tokenizePromptBody(body){
+    body = (body == null) ? '' : String(body);
+    return body.split(',').map(x=>x.trim()).filter(Boolean);
+  }
+
+  function containsAny(t, arr){
+    const n = norm(t);
+    return arr.some(w => n.includes(w));
+  }
+
+  function bucketize(tokens){
+    const buckets = { pipeline:[], subject:[], environment:[], composition:[], lighting:[], details:[], constraints:[] };
+    const PIPE = ['realistic photograph','realistic photography','hyperrealistic','photography','detailed illustration','illustration','vector','claymation','knitted','crochet','felt','paper cut','stop-motion'];
+    const ENV = ['office','workshop','village','street','kitchen','living room','room','interior','forest','mountain','cabin','warehouse','factory','city','town'];
+    const COMP = ['flatlay','flat lay','top down','top-down','isometric','wide shot','center composition','group portrait','portrait','macro','close-up'];
+    const LIGHT = ['cinematic lighting','studio lighting','natural lighting','soft light','warm light','candle','golden light','bokeh','backlight','rim light'];
+    const CONSTR = ['no readable text','no text','no logo','no watermark'];
+
+    for(const tok of tokens){
+      const t = (tok||'').trim();
+      if(!t) continue;
+
+      if(containsAny(t, PIPE)){ buckets.pipeline.push(t); continue; }
+      if(containsAny(t, CONSTR)){ buckets.constraints.push(t); continue; }
+      if(containsAny(t, COMP)){ buckets.composition.push(t); continue; }
+      if(containsAny(t, LIGHT)){ buckets.lighting.push(t); continue; }
+      if(containsAny(t, ENV)){ buckets.environment.push(t); continue; }
+
+      if(containsAny(t, ['snow','snowfall','frost','icy','winter','atmosphere','cozy','festive','sparkle','glow'])){
+        buckets.details.push(t); continue;
+      }
+
+      buckets.subject.push(t);
+    }
+    return buckets;
+  }
+
+  function dedupe(arr){
+    const out=[]; const seen=new Set();
+    for(const x of arr){
+      const k=(x||'').trim(); if(!k) continue;
+      const key=k.toLowerCase();
+      if(seen.has(key)) continue;
+      seen.add(key);
+      out.push(k);
+    }
+    return out;
+  }
+
+  function pickPipelinePrefix(buckets){
+    const all = buckets.pipeline.map(norm).join(' | ');
+    if(all.includes('clay') || all.includes('knit') || all.includes('crochet') || all.includes('felt') || all.includes('paper cut') || all.includes('stop-motion')){
+      return 'handmade christmas scene of';
+    }
+    if(all.includes('realistic') || all.includes('photography') || all.includes('hyperrealistic')){
+      return 'realistic photograph of';
+    }
+    if(all.includes('vector')){
+      return 'vector graphic of';
+    }
+    if(all.includes('illustration')){
+      return 'detailed illustration of';
+    }
+    return 'image of';
+  }
+
+  
+
+
+
+  function escapeHtml(s){
+    return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+  }
+
+  function showFinalPrompt(raw){
+    const box = document.getElementById('finalOut');
+    if(!box) return;
+    const res = finalizeForMidjourney(raw);
+    box.style.display = 'block';
+    box.innerHTML = '<div class="title">✅ Final (Midjourney-optimiert)</div>' + escapeHtml(res.finalPrompt);
+  }
+
+
+function buildPrompt(){
+    const g = selectedTokensByGroup();
+    let parts = [];
+
+    // ── ANKER #1: Grundidee (bleibt immer an erster Stelle) ──────────────
+    const motif = (els.motif?.value || '').trim();
+    if(motif) parts.push(motif);
+
+    // ── HAUPTSTIL direkt nach Anker (#2) ─────────────────────────────────
+    // mainStyle kommt sofort nach der Grundidee, bevor alles andere
+    if(g.mainStyle && g.mainStyle.length) parts.push(...g.mainStyle);
+
+    // ── Motif-Cluster keyword (optional, nach Stil) ───────────────────────
+    const motifToken = (els.motifToken?.value || '').trim();
+    if(motifToken) parts.push(motifToken);
+
+    // ── Design Family tokens ──────────────────────────────────────────────
+    const famKey = (els.designFamily?.value || '').trim();
+    const fam = famKey ? DESIGN_FAMILIES[famKey] : null;
+    if(fam && Array.isArray(fam.tokens)) parts.push(...fam.tokens);
+
+    // ── Zielgruppe tokens ─────────────────────────────────────────────────
+    if(selectedAudience && AUDIENCES[selectedAudience]){
+      parts.push(...AUDIENCES[selectedAudience].tokens);
+    }
+
+    // ── Wesen im Bild (globaler Gatekeeper) ──────────────────────────────
+    const beingsMode = (document.getElementById('beingsMode')?.value || 'none').trim();
+    const beingsAdd = {
+      people: ['with people', 'human figures'],
+      animals: ['with animals', 'cute animals'],
+      characters: ['with characters', 'christmas characters'],
+      both: ['with people', 'with animals']
+    };
+    if(beingsAdd[beingsMode]) parts.push(...beingsAdd[beingsMode]);
+
+    // ── Restliche Gruppen (Reihenfolge: Szene → Wetter → Details → ...) ──
+    parts.push(...(g.scene || []));
+    parts.push(...(g.weather || []));
+    // mainStyle wurde bereits oben eingefügt – hier NICHT nochmal pushen
+    parts.push(...(g.detail || []));
+    parts.push(...(g.colors || []));
+    parts.push(...(g.composition || []));
+    parts.push(...(g.elements || []));
+    parts.push(...(g.characters || []));
+    parts.push(...(g.decor || []));
+    parts.push(...(g.paper || []));
+    parts.push(...(g.technical || []));
+
+    // Immer dabei
+    parts.push('christmas advent calendar background illustration');
+    parts.push('no readable text');
+
+    let clean = uniqKeepOrder(parts);
+
+    // Midjourney params
+    let params = [];
+    if(els.ar?.value) params.push(`--ar ${els.ar.value}`);
+    if(els.v?.value) params.push(`--v ${els.v.value}`);
+    if(els.mjStyle?.value === 'raw') params.push(`--style raw`);
+    if(els.quality?.value) params.push(`--quality ${els.quality.value}`);
+    if(els.stylize?.value !== '') params.push(`--stylize ${els.stylize.value}`);
+    if(els.chaos?.value !== '') params.push(`--chaos ${els.chaos.value}`);
+    if(els.stop?.value !== '') params.push(`--stop ${els.stop.value}`);
+    const w = Number(els.weird?.value || '0');
+    if(w > 0) params.push(`--weird ${w}`);
+    const seed = (els.seed?.value || '').trim();
+    if(seed) params.push(`--seed ${seed}`);
+    if(els.tile?.value === 'on') params.push(`--tile`);
+    const exUser = (els.exclude?.value || '').trim();
+    const beingsNo = (beingsMode === 'none') ? ['people','person','humans','faces','animals','pets','characters'] : [];
+    const exAll = [...(exUser ? exUser.split(',').map(s=>s.trim()).filter(Boolean) : []), ...beingsNo];
+    const ex = Array.from(new Set(exAll)).join(', ');
+    if(ex) params.push(`--no ${ex}`);
+
+    // Prompt-Compiler ausführen
+    clearWarnings();
+    window.__beingsMode = (document.getElementById('beingsMode')?.value || window.__beingsMode || 'none').trim();
+    const resolved = resolveConflicts(clean, params);
+    clean = resolved.parts;
+    params = resolved.params;
+    resolved.notes.forEach(addWarning);
+
+    return (clean.join(', ') + (params.length ? ' ' + params.join(' ') : '')).trim();
+  }
+
+  function liveUpdate(){
+    if(!els.out) return;
+    els.out.value = buildPrompt();
+    // Reset final state — user must re-aufbereiten after any change
+    const wrap = document.getElementById('finalWrap');
+    const box  = document.getElementById('finalBox');
+    const copyBtn = document.getElementById('copy');
+    if(wrap) wrap.style.display = 'none';
+    if(box)  box.textContent = '';
+    if(copyBtn) copyBtn.style.display = 'none';
+  }
+
+  function getCurrentState(){
+    return {
+      motif: els.motif?.value || '',
+      motifCluster: els.motifCluster?.value || '',
+      motifToken: els.motifToken?.value || '',
+      designFamily: els.designFamily?.value || '',
+      beingsMode: document.getElementById('beingsMode')?.value || 'none',
+      ar: els.ar?.value || '3:4',
+      v: els.v?.value || '6.1',
+      mjStyle: els.mjStyle?.value || 'raw',
+      quality: els.quality?.value || '2',
+      stylize: els.stylize?.value || '100',
+      chaos: els.chaos?.value || '0',
+      stop: els.stop?.value || '',
+      weird: els.weird?.value || '0',
+      seed: els.seed?.value || '',
+      exclude: els.exclude?.value || '',
+      tile: els.tile?.value || 'off',
+      chips: chips().map(c => ({
+        token: c.getAttribute('data-token'),
+        w: c.getAttribute('data-w') || '0'
+      })),
+      audience: selectedAudience || ''
+    };
+  }
+
+  function saveState(){
+    const state = getCurrentState();
+    localStorage.setItem(KEY, JSON.stringify(state));
+  }
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(!raw) return;
+      const s = JSON.parse(raw);
+      applyState(s);
+    }catch(_){ /* ignore */ }
+  }
+
+  function applyState(s){
+    if(els.motif) els.motif.value = s.motif || '';
+    if(els.motifCluster) els.motifCluster.value = s.motifCluster || '';
+    if(els.motifToken) els.motifToken.value = s.motifToken || '';
+    if(els.designFamily) els.designFamily.value = s.designFamily || '';
+    
+    if(els.beingsMode) els.beingsMode.value = s.beingsMode || 'none';
+if(els.motifTokenLabel) els.motifTokenLabel.textContent = (s.motifToken || '–');
+    if(els.ar) els.ar.value = s.ar || '3:4';
+    if(els.v) els.v.value = s.v || '6.1';
+    if(els.stylize) els.stylize.value = s.stylize || '100';
+    if(els.chaos) els.chaos.value = s.chaos || '0';
+    if(els.stop) els.stop.value = s.stop || '';
+    if(els.weird) els.weird.value = s.weird || '0';
+    if(els.mjStyle) els.mjStyle.value = s.mjStyle || 'raw';
+    if(els.quality) els.quality.value = s.quality || '2';
+    if(els.seed) els.seed.value = s.seed || '';
+    if(els.exclude) els.exclude.value = s.exclude || '';
+    if(els.tile) els.tile.value = s.tile || 'off';
+
+    if(Array.isArray(s.chips)){
+      const map = new Map(s.chips.map(x => [x.token, x.w]));
+      chips().forEach(c => {
+        const tok = c.getAttribute('data-token');
+        const w = map.get(tok) ?? '0';
+        c.setAttribute('data-w', String(w));
+        c.classList.toggle('on', Number(w) > 0);
+      });
+    }
+    // Restore audience
+    if(s.audience && AUDIENCES[s.audience]){
+      selectedAudience = s.audience;
+      document.querySelectorAll('.audience-card').forEach(c => {
+        c.classList.toggle('selected', c.getAttribute('data-audience') === s.audience);
+      });
+      updateAudienceBadge();
+    }
+  }
+
+  function resetAll(){
+    localStorage.removeItem(KEY);
+    location.reload();
+  }
+
+  function copyOut(){
+    const text = (document.getElementById('finalBox')?.textContent || '').trim();
+    if(!text){ toast('Erst aufbereiten!'); return; }
+    navigator.clipboard.writeText(text).then(()=>toast('✅ Kopiert!'))
+      .catch(()=>{
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        toast('✅ Kopiert!');
+      });
+  }
+
+  // Template Management
+  function getTemplates(){
+    try{
+      const raw = localStorage.getItem(TEMPLATE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    }catch(_){
+      return {};
+    }
+  }
+
+  function saveTemplates(templates){
+    localStorage.setItem(TEMPLATE_KEY, JSON.stringify(templates));
+  }
+
+  function refreshTemplateSelect(){
+    const templates = getTemplates();
+    const select = els.templateSelect;
+    if(!select) return;
+
+    while(select.options.length > 1){
+      select.remove(1);
+    }
+
+    Object.keys(templates).sort().forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      select.appendChild(opt);
+    });
+  }
+
+  function handleSaveTemplate(){
+    const name = (els.templateName?.value || '').trim();
+    if(!name){
+      toast('❌ Bitte Namen eingeben');
+      return;
+    }
+
+    const state = getCurrentState();
+    const templates = getTemplates();
+    templates[name] = state;
+    saveTemplates(templates);
+
+    refreshTemplateSelect();
+    els.templateName.value = '';
+    toast(`✅ Vorlage "${name}" gespeichert`);
+  }
+
+  function handleLoadTemplate(){
+    const name = els.templateSelect?.value;
+    if(!name){
+      toast('❌ Bitte Vorlage auswählen');
+      return;
+    }
+
+    const templates = getTemplates();
+    const template = templates[name];
+    if(!template){
+      toast('❌ Vorlage nicht gefunden');
+      return;
+    }
+
+    applyState(template);
+    liveUpdate();
+    saveState();
+    toast(`✅ Vorlage "${name}" geladen`);
+  }
+
+  function handleDeleteTemplate(){
+    const name = els.templateSelect?.value;
+    if(!name){
+      toast('❌ Bitte Vorlage auswählen');
+      return;
+    }
+
+    if(!confirm(`Vorlage "${name}" wirklich löschen?`)){
+      return;
+    }
+
+    const templates = getTemplates();
+    delete templates[name];
+    saveTemplates(templates);
+
+    refreshTemplateSelect();
+    els.templateSelect.value = '';
+    toast(`✅ Vorlage "${name}" gelöscht`);
+  }
+
+  function handleExportTemplates(){
+    const templates = getTemplates();
+    const count = Object.keys(templates).length;
+
+    if(count === 0){
+      toast('❌ Keine Vorlagen zum Exportieren');
+      return;
+    }
+
+    const dataStr = JSON.stringify(templates, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    const date = new Date().toISOString().split('T')[0];
+    a.download = `adventskalender-vorlagen-${date}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast(`✅ ${count} Vorlage(n) exportiert`);
+  }
+
+  function handleImportTemplates(){
+    els.importFile?.click();
+  }
+
+  function handleFileImport(event){
+    const file = event.target?.files?.[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try{
+        const imported = JSON.parse(e.target?.result || '{}');
+
+        if(typeof imported !== 'object' || imported === null || Array.isArray(imported)){
+          toast('❌ Ungültiges Dateiformat');
+          return;
+        }
+
+        const existing = getTemplates();
+        const conflicts = [];
+        const newTemplates = {};
+
+        Object.keys(imported).forEach(name => {
+          if(existing[name]){
+            conflicts.push(name);
+          }
+          newTemplates[name] = imported[name];
+        });
+
+        if(conflicts.length > 0){
+          const msg = `Die folgenden Vorlagen existieren bereits:\n${conflicts.join('\n')}\n\nÜberschreiben?`;
+          if(!confirm(msg)){
+            toast('❌ Import abgebrochen');
+            return;
+          }
+        }
+
+        const merged = { ...existing, ...newTemplates };
+        saveTemplates(merged);
+        refreshTemplateSelect();
+
+        const count = Object.keys(newTemplates).length;
+        toast(`✅ ${count} Vorlage(n) importiert`);
+      }catch(err){
+        console.error(err);
+        toast('❌ Fehler beim Importieren');
+      }
+    };
+
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  // Init chips with weighting via event delegation
+  function initChips(){
+    chips().forEach(c => {
+      if(!c.hasAttribute('data-w')) c.setAttribute('data-w','0');
+      c.classList.toggle('on', Number(c.getAttribute('data-w')||'0') > 0);
+    });
+
+    document.addEventListener('click', (e) => {
+      const t = e.target;
+      if(!(t instanceof HTMLElement)) return;
+      const chip = t.closest('.chip');
+      if(!chip) return;
+      e.preventDefault();
+
+      const bar = chip.closest('[data-group]');
+      const isExclusive = bar && bar.getAttribute('data-exclusive') === 'true';
+
+      if(isExclusive){
+        // Radio-mode: clicking already-active chip deselects; clicking another selects only it
+        const cur = Number(chip.getAttribute('data-w') || '0');
+        // Deselect all siblings first
+        if(bar){
+          bar.querySelectorAll('.chip').forEach(c => {
+            c.setAttribute('data-w','0');
+            c.classList.remove('on');
+          });
+        }
+        // If was off → turn on (w=1). If was on → leave off (toggle off)
+        const next = cur === 0 ? 1 : 0;
+        chip.setAttribute('data-w', String(next));
+        chip.classList.toggle('on', next > 0);
+      } else {
+        // Multi-mode with weighting: 0 → 1 → 1.5 → 2 → 0
+        const cur = Number(chip.getAttribute('data-w') || '0');
+        const next = cur === 0 ? 1 : cur === 1 ? 1.5 : cur === 1.5 ? 2 : 0;
+        chip.setAttribute('data-w', String(next));
+        chip.classList.toggle('on', next > 0);
+      }
+
+      liveUpdate();
+      saveState();
+    });
+  }
+
+  // Live update on inputs
+  [els.motif, els.motifCluster, els.designFamily, els.beingsMode, els.ar, els.v, els.mjStyle, els.quality, els.stylize, els.chaos, els.stop, els.weird, els.seed, els.exclude, els.tile].forEach(el => {
+    if(!el) return;
+    el.addEventListener('input', () => { liveUpdate(); saveState(); });
+    el.addEventListener('change', () => { liveUpdate(); saveState(); });
+  });
+
+
+  // Extra: motif cluster & design family logic
+  els.motifCluster?.addEventListener('change', () => { setMotifTokenFromCluster(true); liveUpdate(); saveState(); });
+  els.motifReroll?.addEventListener('click', () => { setMotifTokenFromCluster(true); liveUpdate(); saveState(); });
+
+  els.designFamily?.addEventListener('change', () => { applyDesignFamilyDefaults(); liveUpdate(); saveState(); });
+  els.beingsMode?.addEventListener('change', () => { liveUpdate(); saveState(); });
+
+
+  // Buttons
+  els.copy?.addEventListener('click', copyOut);
+  els.reset?.addEventListener('click', resetAll);
+  els.saveTemplate?.addEventListener('click', handleSaveTemplate);
+  els.loadTemplate?.addEventListener('click', handleLoadTemplate);
+  els.deleteTemplate?.addEventListener('click', handleDeleteTemplate);
+  els.exportTemplates?.addEventListener('click', handleExportTemplates);
+  els.importTemplates?.addEventListener('click', handleImportTemplates);
+  els.importFile?.addEventListener('change', handleFileImport);
+
+  // Shortcuts (only when not typing)
+  window.addEventListener('keydown', (e) => {
+    const tag = e.target && e.target.tagName;
+    const isTyping = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+    if(isTyping) return;
+    const k = e.key.toLowerCase();
+    if(k==='c'){ copyOut(); }
+    if(k==='r'){ resetAll(); }
+  });
+
+  // Boot
+  loadState();
+  // Sync derived UI
+  setMotifTokenFromCluster(false);
+  applyDesignFamilyDefaults();
+  initChips();
+  refreshTemplateSelect();
+  liveUpdate();
+
+  // --- Expose key functions globally (for onclick + hosted use) ---
+  try{
+    window.compilePrompt = compilePrompt;
+    window.uniq = uniq;
+    window.finalizeForMidjourney = finalizeForMidjourney;
+    window.normalizeParams = normalizeParams;
+    window.clearWarnings = clearWarnings;
+    window.addWarning = addWarning;
+    window.detectIntent = detectIntent;
+    window.detectPipeline = detectPipeline;
+    window.classifyTokens = classifyTokens;
+    window.pipelinePrefix = pipelinePrefix;
+    window.norm = norm;
+    window.splitPromptAndParams = splitPromptAndParams;
+    window.tokenizePromptBody = tokenizePromptBody;
+    window.norm = norm;
+  }catch(_){}
+
+})();
+
+
+  // --- Finalizer: Prompt "aufbereiten" in MJ-stabile Satzstruktur ---
+  function splitPromptAndParams(promptStr){
+    const s = (promptStr||'').trim();
+    if(!s) return { body:'', params:[] };
+    // split at first " --" sequence
+    const idx = s.indexOf(" --");
+    if(idx === -1) return { body:s, params:[] };
+    const body = s.slice(0, idx).trim();
+    const paramStr = s.slice(idx).trim();
+    // params as tokens starting with --
+    const params = paramStr.split(/\s+/).filter(x=>x.startsWith('--'));
+    return { body, params };
+  }
+
+  function classifyTokens(tokens){
+    const groups = { subject:[], env:[], comp:[], light:[], style:[], constraints:[], misc:[] };
+    const envKeys = ['office','workshop','village','street','kitchen','living room','interior','forest','mountain','cabin','warehouse','factory','city','town','room'];
+    const compKeys = ['wide shot','center composition','top down','flat lay','flatlay','macro','close-up','portrait','group portrait','isometric'];
+    const lightKeys = ['cinematic lighting','studio lighting','natural lighting','warm light','candle light','soft light','bokeh','snowfall','snow','icy','frosty','golden hour','glowing','moody'];
+    const constraintKeys = ['no readable text','no text','no words','without text'];
+    for(const t of tokens){
+      const n = norm(t);
+      if(constraintKeys.some(k=>n.includes(k))) { groups.constraints.push(t); continue; }
+      if(compKeys.some(k=>n.includes(k))) { groups.comp.push(t); continue; }
+      if(envKeys.some(k=>n.includes(k))) { groups.env.push(t); continue; }
+      if(lightKeys.some(k=>n.includes(k))) { groups.light.push(t); continue; }
+      // style-ish
+      if(n.includes('photography') || n.includes('illustration') || n.includes('vector') || n.includes('clay') || n.includes('knit') || n.includes('crochet') || n.includes('felt') || n.includes('paper cut') || n.includes('embroidery') || n.includes('minimal') || n.includes('scandinavian') || n.includes('premium') || n.includes('gold foil') || n.includes('embossed')) { 
+        groups.style.push(t); continue;
+      }
+      // subject-ish
+      if(n.includes('santa') || n.includes('reindeer') || n.includes('snowman') || n.includes('elf') || n.includes('characters') || n.includes('people') || n.includes('animals') || n.includes('icons') || n.includes('advent calendar') || n.includes('christmas')) {
+        groups.subject.push(t); continue;
+      }
+      groups.misc.push(t);
+    }
+    // de-dupe each
+    for(const k of Object.keys(groups)) groups[k] = uniq(groups[k]);
+    return groups;
+  }
+
+  function pipelinePrefix(intent, pipeline){
+    if(intent === 'pattern') return 'seamless repeating christmas pattern of';
+    if(intent === 'poster') return 'graphic poster of';
+    if(intent === 'product') return (pipeline === 'photo') ? 'realistic product photo of' : 'product design of';
+    if(pipeline === 'photo') return 'realistic photograph of';
+    if(pipeline === 'handmade') return 'handmade craft style depiction of';
+    if(pipeline === 'vector') return 'vector graphic of';
+    if(pipeline === 'illustration') return 'detailed illustration of';
+    return 'image of';
+  }
+
+  
+function finalizeForMidjourney(raw){
+  const rawPrompt = (raw == null) ? '' : String(raw);
+  const { prompt, params } = splitPromptAndParams(rawPrompt);
+
+  const body = (prompt == null) ? '' : String(prompt).trim();
+  let tokens = body.split(',').map(s => s.trim()).filter(Boolean);
+
+  const seen = new Set();
+  const dedup = [];
+  for(const t of tokens){
+    const key = t.toLowerCase();
+    if(seen.has(key)) continue;
+    seen.add(key);
+    dedup.push(t);
+  }
+  tokens = dedup;
+
+  function hasAny(rxList){
+    const s = tokens.join(' , ').toLowerCase();
+    return rxList.some(rx => rx.test(s));
+  }
+  function replaceAll(rx, repl){
+    tokens = tokens.map(t => t.replace(rx, repl));
+  }
+  function ensureFront(prefix){
+    // Grundidee = token[0] ist immer ANKER – Style-Prefix kommt direkt dahinter (Position 1).
+    if(!prefix) return;
+    const low = prefix.toLowerCase();
+    // Entferne den Prefix falls er irgendwo anders im Array steckt
+    tokens = tokens.filter(t => t.toLowerCase() !== low);
+
+    if(tokens.length === 0){
+      tokens.unshift(prefix);
+      return;
+    }
+    // Token[0] ist die Grundidee (Anker) – NIEMALS verschieben.
+    // Style-Prefix kommt an Position 1 (direkt nach dem Anker).
+    tokens.splice(1, 0, prefix);
+  }
+  function ensureIncludes(list){
+    for(const x of list){
+      const low = x.toLowerCase();
+      if(!tokens.some(t => t.toLowerCase() === low)) tokens.push(x);
+    }
+  }
+
+  const style = (function(){
+    if(hasAny([/crochet\b/,/amigurumi\b/,/knit\b/,/knitted\b/,/wool\b/,/h[aä]kel/i,/strick/i])) return 'crochet';
+    if(hasAny([/clay\b/,/claymation\b/,/stop\s*motion\b/,/polymer\s*clay\b/,/knete/i])) return 'clay';
+    if(hasAny([/papercut\b/,/paper\s*cut\b/,/cutout\b/,/paper\s*diorama\b/])) return 'papercut';
+    if(hasAny([/felt\b/,/filz/i])) return 'felt';
+    return 'none';
+  })();
+
+  if(style === 'crochet'){
+    replaceAll(/realistic\s*photograph(y)?/gi,'macro craft photography');
+    replaceAll(/hyperrealistic\b/gi,'macro craft photography');
+    replaceAll(/cinematic\s*lighting/gi,'soft craft studio lighting');
+    replaceAll(/\billustration\b/gi,'crochet doll illustration');
+    ensureFront('handmade amigurumi crochet wool dolls');
+    ensureIncludes(['visible yarn texture','stitched wool patterns','soft knitted fabric']);
+  }
+
+  if(style === 'clay'){
+    replaceAll(/realistic\s*photograph(y)?/gi,'macro clay sculpture photography');
+    replaceAll(/cinematic\s*lighting/gi,'stop-motion studio lighting');
+    replaceAll(/\billustration\b/gi,'claymation illustration');
+    ensureFront('hand sculpted polymer clay characters');
+    ensureIncludes(['clay texture','handmade sculpted surface','stop-motion look']);
+  }
+
+  if(style === 'papercut'){
+    replaceAll(/realistic\s*photograph(y)?/gi,'macro paper diorama photography');
+    replaceAll(/cinematic\s*lighting/gi,'soft paper diorama lighting');
+    replaceAll(/\billustration\b/gi,'paper cut illustration');
+    ensureFront('layered paper cut diorama');
+    ensureIncludes(['paper layers','cut paper edges','shadow depth']);
+  }
+
+  if(style === 'felt'){
+    replaceAll(/realistic\s*photograph(y)?/gi,'macro textile craft photography');
+    replaceAll(/cinematic\s*lighting/gi,'soft craft studio lighting');
+    replaceAll(/\billustration\b/gi,'felt textile toy illustration');
+    ensureFront('handmade felt textile toy characters');
+    ensureIncludes(['felt fabric texture','stitched seams','soft plush textile']);
+  }
+
+  const seen2 = new Set();
+  const clean = [];
+  for(const t of tokens){
+    const tt = String(t).trim();
+    if(!tt) continue;
+    const key = tt.toLowerCase();
+    if(seen2.has(key)) continue;
+    seen2.add(key);
+    clean.push(tt);
+  }
+
+  const paramsClean = normalizeParams(params);
+  const final = (clean.join(', ') + (paramsClean ? ' ' + paramsClean : '')).replace(/\s+/g,' ').trim();
+  return { finalPrompt: final, prompt: final, notes: [] };
+}
+
+
+
+  // --- Aufbereiten-Button: MJ-Final in grünes Feld schreiben ---
+  window.addEventListener('DOMContentLoaded', ()=>{
+    const btn = document.getElementById('btnPrepare');
+    if(!btn) return;
+    btn.setAttribute('type','button');
+
+    btn.addEventListener('click', ()=>{
+      clearWarnings();
+
+      const raw = (document.getElementById('out')?.value || '').trim();
+      if(!raw){
+        addWarning('Kein Prompt im Feld – erst generieren.');
+        return;
+      }
+      if(typeof finalizeForMidjourney !== 'function'){
+        addWarning('Finalizer fehlt (finalizeForMidjourney nicht gefunden).');
+        return;
+      }
+
+      try{
+        const res = finalizeForMidjourney(raw);
+        const wrap = document.getElementById('finalWrap');
+        const box  = document.getElementById('finalBox');
+        if(wrap) wrap.style.display = 'block';
+        if(box)  box.textContent = (res.finalPrompt || res.prompt || '');
+        if(wrap) wrap.scrollIntoView({behavior:'smooth', block:'nearest'});
+        // Reveal copy button now that final prompt exists
+        const copyBtn = document.getElementById('copy');
+        if(copyBtn) copyBtn.style.display = '';
+        addWarning('Final prompt erstellt.');
+      }catch(e){
+        addWarning('Finalizer-Fehler: ' + (e?.message || e));
+      }
+    });
+  });
+
+
+
+
+  // --- Global (unkaputtbar): inline onclick handler ---
+  window.onPrepareClick = function(){
+    try{
+      const warnings = document.getElementById('warnings');
+      if(warnings) warnings.innerHTML = '';
+      const warn = (msg)=>{
+        if(warnings){
+          const d = document.createElement('div');
+          d.className = 'w';
+          d.textContent = msg;
+          warnings.appendChild(d);
+        }else{
+          console.warn(msg);
+        }
+      };
+
+      const raw = (document.getElementById('out')?.value || '').trim();
+      if(!raw){
+        warn('Kein Prompt im Feld – erst generieren.');
+        return;
+      }
+      if(typeof finalizeForMidjourney !== 'function'){
+        warn('Finalizer fehlt (finalizeForMidjourney nicht gefunden).');
+        return;
+      }
+
+      const res = finalizeForMidjourney(raw);
+      const wrap = document.getElementById('finalWrap');
+      const box  = document.getElementById('finalBox');
+      if(wrap) wrap.style.display = 'block';
+      if(box)  box.textContent = (res.finalPrompt || res.prompt || '');
+      if(wrap) wrap.scrollIntoView({behavior:'smooth', block:'nearest'});
+      // Reveal copy button now that final prompt exists
+      const copyBtn = document.getElementById('copy');
+      if(copyBtn) copyBtn.style.display = '';
+      warn('Final prompt erstellt.');
+    }catch(e){
+      console.error(e);
+      const warnings = document.getElementById('warnings');
+      if(warnings){
+        const d = document.createElement('div');
+        d.className = 'w';
+        d.textContent = 'Finalizer-Fehler: ' + (e?.message || e);
+        warnings.appendChild(d);
+      }
+    }
+  };
+
+
+
+function normalizeParams(params){
+    let p = (params == null) ? '' : String(params);
+    if(!p) return '';
+
+    // 1) Fix spaced dashes and whitespace noise
+    p = p.replace(/-\s*-\s*/g, '--');
+    p = p.replace(/\s+/g, ' ').trim();
+
+    // 2) Fix known flags where letters got spaced: "-- a r" -> "--ar"
+    const flagFixes = [
+      ['ar','--ar'],
+      ['v','--v'],
+      ['niji','--niji'],
+      ['style','--style'],
+      ['quality','--quality'],
+      ['stylize','--stylize'],
+      ['chaos','--chaos'],
+      ['seed','--seed'],
+      ['iw','--iw'],
+      ['no','--no']
+    ];
+    for(const [flag, repl] of flagFixes){
+      const spaced = flag.split('').join('\\s*'); // a\\s*r etc.
+      const rx = new RegExp(`--\\s*${spaced}\\b`, 'gi');
+      p = p.replace(rx, repl);
+    }
+
+    // 3) Fix numbers: "6 . 1" -> "6.1" and ratios "3 : 4" -> "3:4"
+    p = p.replace(/(\d)\s*\.\s*(\d)/g, '$1.$2');
+    p = p.replace(/(\d)\s*:\s*(\d)/g, '$1:$2');
+
+    // 4) Ensure params are separated by single spaces
+    p = p.replace(/\s+/g, ' ').trim();
+
+    // 5) Resolve version conflicts: keep last of --niji or --v
+    const hasNiji = /--niji\b/i.test(p);
+    const hasV = /--v\b/i.test(p);
+    if(hasNiji && hasV){
+      const lastN = p.toLowerCase().lastIndexOf('--niji');
+      const lastV = p.toLowerCase().lastIndexOf('--v');
+      if(lastN > lastV){
+        p = p.replace(/--v\s+\S+/gi, '').replace(/\s+/g,' ').trim();
+      }else{
+        p = p.replace(/--niji\s+\S+/gi, '').replace(/\s+/g,' ').trim();
+      }
+    }
+
+    return p;
+  }
+</script>
+</body>
+</html>
