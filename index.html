@@ -7,6 +7,7 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500&family=Geist:wght@300;400;500;600&display=swap');
 
+    /* ── DARK MODE (default) ──────────────────────────────── */
     :root{
       --bg:         #111110;
       --bg2:        #161614;
@@ -29,10 +30,42 @@
       --border-gold:rgba(201,168,76,.32);
 
       --shadow-m:   0 4px 28px rgba(0,0,0,.6);
-
       --r:          8px;
       --r-sm:       5px;
+
+      --warn-bg:    rgba(200,120,40,.12);
+      --warn-border:rgba(200,140,60,.3);
+      --warn-text:  rgba(230,185,100,.85);
+      --warn-drop:  rgba(230,100,80,.75);
     }
+
+    /* ── LIGHT MODE ──────────────────────────────────────── */
+    [data-theme="light"]{
+      --bg:         #f5f2ec;
+      --bg2:        #ede9e1;
+      --panel:      #ffffff;
+      --panel2:     #f0ece4;
+      --text:       #1a1916;
+      --text2:      #3d3a34;
+      --muted:      #9a9590;
+      --muted2:     #6e6a62;
+      --gold:       #a87c28;
+      --gold-light: #8a6318;
+      --gold-dim:   rgba(168,124,40,.1);
+      --gold-line:  rgba(168,124,40,.22);
+      --border:     rgba(30,25,15,.08);
+      --border-mid: rgba(30,25,15,.14);
+      --border-hi:  rgba(30,25,15,.22);
+      --border-gold:rgba(168,124,40,.35);
+      --shadow-m:   0 2px 16px rgba(0,0,0,.1);
+      --warn-bg:    rgba(180,100,20,.08);
+      --warn-border:rgba(180,120,30,.25);
+      --warn-text:  rgba(140,90,10,.9);
+      --warn-drop:  rgba(180,60,40,.8);
+    }
+    [data-theme="light"] body::after{ opacity:.012; }
+    [data-theme="light"] header{ background: rgba(245,242,236,.92); }
+    [data-theme="light"] select option{ background:#fff; color:#1a1916; }
 
     *{ box-sizing:border-box; margin:0; padding:0; }
     html{ scroll-behavior:smooth; }
@@ -327,6 +360,18 @@
       color: var(--gold-light);
       border: 1px solid var(--border-gold);
     }
+    .tab-btn{ position: relative; }
+    .tab-badge{
+      display:none;
+      position:absolute; top:4px; right:6px;
+      width:16px; height:16px; border-radius:50%;
+      background:var(--gold); color:#111110;
+      font-size:9px; font-weight:700;
+      font-family:'Geist',sans-serif;
+      align-items:center; justify-content:center;
+      line-height:1;
+    }
+    .tab-badge.visible{ display:flex; }
     .tab-panel{ display:none; }
     .tab-panel.active{ display:block; }
 
@@ -384,6 +429,120 @@
       color:var(--text2);
     }
 
+    /* ── Theme Toggle ────────────────────────────────────── */
+    .theme-toggle{
+      display:flex; align-items:center; gap:8px;
+      padding:6px 10px;
+      border:1px solid var(--border-mid);
+      border-radius:20px;
+      background:rgba(255,248,235,.04);
+      cursor:pointer;
+      transition: background .2s, border-color .2s;
+      user-select:none;
+    }
+    .theme-toggle:hover{ background:rgba(255,248,235,.08); border-color:var(--border-hi); }
+    [data-theme="light"] .theme-toggle{ background:rgba(30,25,15,.04); }
+    [data-theme="light"] .theme-toggle:hover{ background:rgba(30,25,15,.08); }
+    .toggle-track{
+      width:32px; height:18px; border-radius:9px;
+      background:var(--muted); position:relative;
+      transition:background .2s; flex-shrink:0;
+    }
+    [data-theme="light"] .toggle-track{ background:var(--gold); }
+    .toggle-thumb{
+      position:absolute; top:3px; left:3px;
+      width:12px; height:12px; border-radius:50%;
+      background:#fff; transition:transform .2s;
+      box-shadow:0 1px 3px rgba(0,0,0,.3);
+    }
+    [data-theme="light"] .toggle-thumb{ transform:translateX(14px); }
+    .toggle-label{
+      font-family:'Geist Mono',monospace;
+      font-size:10px; letter-spacing:0.08em;
+      text-transform:uppercase; color:var(--muted2);
+    }
+
+    /* ── Conflict Panel ──────────────────────────────────── */
+    .conflict-panel{
+      display:none; margin-bottom:14px;
+      border:1px solid var(--warn-border);
+      background:var(--warn-bg);
+      border-radius:var(--r-sm); overflow:hidden;
+    }
+    .conflict-panel.has-items{ display:block; }
+    .conflict-header{
+      padding:9px 13px;
+      display:flex; align-items:center; gap:8px;
+      border-bottom:1px solid var(--warn-border);
+      cursor:pointer;
+    }
+    .conflict-header-text{
+      font-family:'Geist Mono',monospace;
+      font-size:10px; font-weight:500; letter-spacing:0.1em;
+      text-transform:uppercase; color:var(--warn-text); flex:1;
+    }
+    .conflict-toggle-icon{ font-size:10px; color:var(--warn-text); opacity:.6; transition:transform .2s; }
+    .conflict-panel.collapsed .conflict-toggle-icon{ transform:rotate(-90deg); }
+    .conflict-body{ padding:10px 13px; display:flex; flex-direction:column; gap:6px; }
+    .conflict-panel.collapsed .conflict-body{ display:none; }
+    .conflict-item{ font-size:12px; line-height:1.5; display:flex; gap:8px; align-items:baseline; }
+    .conflict-item .ci-icon{ font-size:11px; flex-shrink:0; }
+    .conflict-item .ci-msg{ color:var(--warn-text); }
+    .conflict-item .ci-dropped{
+      font-family:'Geist Mono',monospace; font-size:10px;
+      color:var(--warn-drop); text-decoration:line-through; opacity:.8;
+    }
+    .conflict-item .ci-kept{
+      font-family:'Geist Mono',monospace; font-size:10px;
+      color:var(--warn-text); opacity:.7;
+    }
+
+    /* ── Info Tooltip ────────────────────────────────────── */
+    .field-label{
+      display:flex; align-items:center; gap:6px;
+      margin-bottom:6px;
+    }
+    .info-icon{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:14px; height:14px; border-radius:50%;
+      border:1px solid var(--muted);
+      color:var(--muted); font-size:9px; font-weight:600;
+      font-family:'Geist',sans-serif;
+      cursor:default; flex-shrink:0;
+      position:relative;
+      transition:border-color .15s, color .15s;
+      line-height:1;
+    }
+    .info-icon:hover{ border-color:var(--gold); color:var(--gold); }
+    .info-icon .tooltip{
+      display:none;
+      position:absolute; bottom:calc(100% + 8px); left:50%;
+      transform:translateX(-50%);
+      background:var(--panel2);
+      border:1px solid var(--border-gold);
+      border-radius:6px;
+      padding:9px 12px;
+      width:220px;
+      font-size:11px; font-weight:300; line-height:1.55;
+      color:var(--text2);
+      font-family:'Geist',sans-serif;
+      box-shadow:0 4px 20px rgba(0,0,0,.4);
+      z-index:200;
+      text-align:left;
+      pointer-events:none;
+      letter-spacing:0;
+    }
+    /* arrow */
+    .info-icon .tooltip::after{
+      content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%);
+      border:5px solid transparent;
+      border-top-color:var(--border-gold);
+    }
+    .info-icon:hover .tooltip{ display:block; }
+    /* flip tooltip to right side when field is on left half */
+    .info-icon.tip-right .tooltip{ left:0; transform:none; }
+    .info-icon.tip-right .tooltip::after{ left:10px; transform:none; }
+
   </style>
 </head>
 <body>
@@ -397,10 +556,16 @@
           </div>
           <p class="sub">Midjourney Prompt Compiler — Grundidee Anker #1, Stil direkt danach</p>
         </div>
-        <div class="pill">
-          <span class="kbd">C</span> kopieren
-          <span style="color:var(--border-hi)">·</span>
-          <span class="kbd">R</span> reset
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div class="pill">
+            <span class="kbd">C</span> kopieren
+            <span style="color:var(--border-hi)">·</span>
+            <span class="kbd">R</span> reset
+          </div>
+          <div class="theme-toggle" id="themeToggle" title="Light / Dark Mode">
+            <div class="toggle-track"><div class="toggle-thumb"></div></div>
+            <span class="toggle-label" id="themeLabel">Dark</span>
+          </div>
         </div>
       </div>
     </div>
@@ -420,7 +585,7 @@
           <!-- ── TABS ─────────────────────────────────────── -->
           <div class="tabs">
             <button class="tab-btn active" data-tab="motiv">Motiv & Stil</button>
-            <button class="tab-btn" data-tab="zielgruppe">Zielgruppe</button>
+            <button class="tab-btn" data-tab="zielgruppe">Zielgruppe<span class="tab-badge" id="zielgruppeBadge">1</span></button>
           </div>
 
           <!-- ══════════════ TAB: MOTIV & STIL ══════════════ -->
@@ -516,8 +681,16 @@
               <span class="chip" data-token="hand-painted watercolor illustration">Aquarell</span>
               <span class="chip" data-token="gouache illustration">Gouache</span>
               <span class="chip" data-token="colored pencil illustration">Buntstift</span>
+              <span class="chip" data-token="oil painting christmas illustration, rich brushwork">Ölgemälde</span>
               <span class="chip" data-token="modern clean digital illustration">Digital-Illustration</span>
               <span class="chip" data-token="minimal scandinavian christmas illustration">Skandinavisch minimal</span>
+              <span class="chip" data-token="flat design christmas illustration, bold shapes, no shadows">Flat Design</span>
+              <span class="chip" data-token="risograph print christmas illustration, limited color, grain texture, print registration offset">Risograph</span>
+              <span class="chip" data-token="linocut woodblock print christmas illustration, rough ink texture, bold lines">Linolschnitt</span>
+              <span class="chip" data-token="japanese woodblock print christmas, ukiyo-e style, flat color areas">Holzschnitt (Japanisch)</span>
+              <span class="chip" data-token="felt fabric christmas illustration, soft textile texture, handcrafted look">Filz / Stoff</span>
+              <span class="chip" data-token="3d render christmas scene, cinema 4d style, soft volumetric lighting">3D Render</span>
+              <span class="chip" data-token="low poly christmas illustration, geometric shapes, faceted style">Low Poly</span>
               <span class="chip" data-token="realistic photography, natural lighting, detailed">Foto-Look</span>
               <span class="chip" data-token="hyperrealistic photography, ultra detailed, cinematic lighting">Hyperrealistic</span>
               <span class="chip" data-token="crochet knitted wool christmas illustration">Häkel / Wolle</span>
@@ -532,10 +705,15 @@
             <div class="groupTitle">Szene <span style="font-weight:300;opacity:.5;margin-left:4px;font-size:9px">nur 1</span></div>
             <div class="chipbar" data-group="scene" data-exclusive="true">
               <span class="chip" data-token="magical european christmas village">Weihnachtsdorf</span>
-              <span class="chip" data-token="festive market square">Marktplatz</span>
+              <span class="chip" data-token="festive christmas market square">Marktplatz</span>
               <span class="chip" data-token="cozy alpine winter scene">Alpen-Winter</span>
               <span class="chip" data-token="snowy forest cabin in winter">Waldhütte</span>
               <span class="chip" data-token="warm living room with christmas tree">Wohnzimmer</span>
+              <span class="chip" data-token="cozy christmas bakery kitchen, flour and pastries">Weihnachtsbäckerei</span>
+              <span class="chip" data-token="frozen ice skating rink in winter, christmas lights">Eisbahn</span>
+              <span class="chip" data-token="snowy european church and bell tower at night">Kirchturm im Schnee</span>
+              <span class="chip" data-token="vintage christmas train station, steam locomotive in snow">Bahnhof / Zug</span>
+              <span class="chip" data-token="northern lights aurora borealis winter night sky">Nordlicht</span>
               <span class="chip" data-token="advent calendar layout with numbered doors">Adventskalender-Layout</span>
               <span class="chip" data-token="christmas still life with gifts and ornaments">Stillleben</span>
               <span class="chip" data-token="portrait of a christmas character">Portrait</span>
@@ -548,15 +726,18 @@
           <div class="group">
             <div class="groupTitle">Wetter & Licht</div>
             <div class="chipbar" data-group="weather">
-              <span class="chip" data-token="sunny winter day">Sonnig</span>
-              <span class="chip" data-token="overcast winter sky">Bewölkt</span>
-              <span class="chip" data-token="foggy winter morning">Neblig</span>
-              <span class="chip" data-token="light snowfall">Leichter Schnee</span>
-              <span class="chip" data-token="heavy snowfall">Starker Schnee</span>
-              <span class="chip" data-token="icy frosty atmosphere">Eisig / Frost</span>
-              <span class="chip" data-token="warm candlelight glow">Kerzenlicht</span>
-              <span class="chip" data-token="soft winter sunlight">Weiches Licht</span>
-              <span class="chip" data-token="starry winter night">Sternennacht</span>
+              <span class="chip" data-token="sunny winter day, crisp blue sky">Sonnig</span>
+              <span class="chip" data-token="overcast winter sky, soft diffused light">Bewölkt</span>
+              <span class="chip" data-token="foggy winter morning, misty atmosphere">Neblig</span>
+              <span class="chip" data-token="light snowfall, gentle snow flurries">Leichter Schnee</span>
+              <span class="chip" data-token="heavy snowfall, blizzard atmosphere">Starker Schnee</span>
+              <span class="chip" data-token="icy frosty atmosphere, frozen crystals">Eisig / Frost</span>
+              <span class="chip" data-token="warm candlelight glow, intimate light">Kerzenlicht</span>
+              <span class="chip" data-token="soft winter sunlight, warm rays">Weiches Licht</span>
+              <span class="chip" data-token="starry winter night, clear dark sky">Sternennacht</span>
+              <span class="chip" data-token="blue hour twilight winter dusk, deep blue sky">Blaue Stunde</span>
+              <span class="chip" data-token="golden hour winter sunset, warm amber light">Goldene Stunde</span>
+              <span class="chip" data-token="warm glowing window from outside in winter night, cozy interior light">Fensterleuchten</span>
             </div>
           </div>
 
@@ -565,14 +746,15 @@
             <div class="group">
               <div class="groupTitle">Detailgrad</div>
               <div class="chipbar" data-group="detail">
-                <span class="chip" data-token="clean illustration style">Clean</span>
-                <span class="chip" data-token="minimal line detail">Minimal</span>
-                <span class="chip" data-token="ultra detailed illustration">Ultra Detail</span>
-                <span class="chip" data-token="highly intricate linework">Feine Linien</span>
-                <span class="chip" data-token="rough sketch texture">Skizzenhaft</span>
-                <span class="chip" data-token="hand drawn imperfect lines">Handgezeichnet</span>
-                <span class="chip" data-token="dense ornamental detail">Ornamental</span>
-                <span class="chip" data-token="soft painterly detail">Malerisch</span>
+                <span class="chip" data-token="clean illustration style, clear shapes">Clean</span>
+                <span class="chip" data-token="flat design minimal, bold shapes, no gradients">Flat / Minimal</span>
+                <span class="chip" data-token="ultra detailed illustration, intricate details">Ultra Detail</span>
+                <span class="chip" data-token="highly intricate linework, fine lines">Feine Linien</span>
+                <span class="chip" data-token="rough sketch texture, loose strokes">Skizzenhaft</span>
+                <span class="chip" data-token="hand drawn imperfect lines, organic feel">Handgezeichnet</span>
+                <span class="chip" data-token="dense ornamental detail, decorative patterns">Ornamental</span>
+                <span class="chip" data-token="soft painterly detail, visible brushwork">Malerisch</span>
+                <span class="chip" data-token="low poly geometric style, faceted shapes">Low Poly</span>
               </div>
             </div>
             <div class="group">
@@ -598,11 +780,14 @@
               <span class="chip" data-token="symmetrical poster layout">Symmetrisch</span>
               <span class="chip" data-token="top down flatlay composition">Flatlay</span>
               <span class="chip" data-token="isometric christmas village view">Isometrisch</span>
-              <span class="chip" data-token="close-up object composition">Nahaufnahme</span>
-              <span class="chip" data-token="wide establishing shot">Totale</span>
-              <span class="chip" data-token="foreground subject with background scene">Vordergrund + BG</span>
+              <span class="chip" data-token="close-up object composition, macro detail">Nahaufnahme</span>
+              <span class="chip" data-token="wide establishing shot, full environment">Totale</span>
+              <span class="chip" data-token="foreground subject with background scene, depth of field">Vordergrund + BG</span>
               <span class="chip" data-token="layered depth foreground middle background">Mehrere Ebenen</span>
-              <span class="chip" data-token="decorative border frame composition">Rahmen</span>
+              <span class="chip" data-token="decorative border frame composition, ornamental border">Rahmen</span>
+              <span class="chip" data-token="worms eye view looking up, dramatic low angle">Froschperspektive</span>
+              <span class="chip" data-token="split scene composition, two worlds side by side, indoor outdoor">Split Scene</span>
+              <span class="chip" data-token="triptych three panel composition, story sequence">Triptychon</span>
             </div>
           </div>
 
@@ -611,14 +796,19 @@
             <div class="group">
               <div class="groupTitle">Elemente</div>
               <div class="chipbar" data-group="elements">
-                <span class="chip" data-token="christmas tree">Weihnachtsbaum</span>
-                <span class="chip" data-token="wrapped gifts">Geschenke</span>
-                <span class="chip" data-token="christmas ornaments">Kugeln</span>
+                <span class="chip" data-token="decorated christmas tree">Weihnachtsbaum</span>
+                <span class="chip" data-token="wrapped christmas gifts with ribbons">Geschenke</span>
+                <span class="chip" data-token="christmas ornaments and baubles">Kugeln</span>
                 <span class="chip" data-token="candles and pine branches">Kerzen & Tanne</span>
-                <span class="chip" data-token="gingerbread house">Lebkuchenhaus</span>
-                <span class="chip" data-token="string lights bokeh">Lichterkette</span>
-                <span class="chip" data-token="snow covered rooftops">Verschneite Dächer</span>
-                <span class="chip" data-token="hot cocoa and cookies">Kakao & Kekse</span>
+                <span class="chip" data-token="gingerbread house with icing">Lebkuchenhaus</span>
+                <span class="chip" data-token="string lights bokeh glow">Lichterkette</span>
+                <span class="chip" data-token="snow covered rooftops and chimneys">Verschneite Dächer</span>
+                <span class="chip" data-token="hot cocoa mug and christmas cookies">Kakao & Kekse</span>
+                <span class="chip" data-token="vintage christmas sled in snow">Schlitten</span>
+                <span class="chip" data-token="glowing lantern in winter snow">Laterne</span>
+                <span class="chip" data-token="mulled wine and punch glasses, steam">Glühwein</span>
+                <span class="chip" data-token="christmas letters and envelopes with stamps">Weihnachtspost</span>
+                <span class="chip" data-token="pine cones and winter foliage">Tannenzapfen</span>
               </div>
             </div>
             <div class="group">
@@ -638,17 +828,19 @@
           <div class="group">
             <div class="groupTitle">Weihnachts-Deko</div>
             <div class="chipbar" data-group="decor">
-              <span class="chip" data-token="advent wreath with candles">Adventskranz</span>
-              <span class="chip" data-token="poinsettia christmas flower">Weihnachtsstern</span>
-              <span class="chip" data-token="candy cane">Zuckerstangen</span>
-              <span class="chip" data-token="christmas stocking hanging on fireplace">Strümpfe am Kamin</span>
-              <span class="chip" data-token="pine garland decoration">Tannengirlanden</span>
-              <span class="chip" data-token="straw star ornament">Strohsterne</span>
-              <span class="chip" data-token="falling snowflakes">Schneeflocken</span>
-              <span class="chip" data-token="frosted window glass">Frostige Fenster</span>
+              <span class="chip" data-token="advent wreath with four candles">Adventskranz</span>
+              <span class="chip" data-token="poinsettia christmas flower arrangement">Weihnachtsstern</span>
+              <span class="chip" data-token="candy cane striped decoration">Zuckerstangen</span>
+              <span class="chip" data-token="christmas stocking hanging on fireplace mantel">Strümpfe am Kamin</span>
+              <span class="chip" data-token="pine garland with berries and ribbon">Tannengirlanden</span>
+              <span class="chip" data-token="handmade straw star ornament">Strohsterne</span>
+              <span class="chip" data-token="delicate falling snowflakes">Schneeflocken</span>
+              <span class="chip" data-token="frosted window glass with ice crystals">Frostige Fenster</span>
               <span class="chip" data-token="footprints in fresh snow">Spuren im Schnee</span>
-              <span class="chip" data-token="icicles hanging from roof">Eiszapfen</span>
+              <span class="chip" data-token="icicles hanging from roof edge">Eiszapfen</span>
               <span class="chip" data-token="snow covered pine branches">Schnee-Tanne</span>
+              <span class="chip" data-token="mistletoe with white berries and red ribbon">Mistelzweig</span>
+              <span class="chip" data-token="christmas ribbon and bow decoration">Schleifen & Bänder</span>
             </div>
           </div>
 
@@ -656,16 +848,20 @@
           <div class="group">
             <div class="groupTitle">Papier & Textur <span style="font-weight:300;opacity:.5;margin-left:4px;font-size:9px">nur 1</span></div>
             <div class="chipbar" data-group="paper" data-exclusive="true">
-              <span class="chip" data-token="matte coated paper texture">Matt gestrichen</span>
-              <span class="chip" data-token="uncoated offset paper texture">Offset</span>
-              <span class="chip" data-token="linen paper texture">Leinenpapier</span>
-              <span class="chip" data-token="canvas texture">Leinwand</span>
-              <span class="chip" data-token="cotton rag paper texture">Bütten</span>
-              <span class="chip" data-token="deckle edge handmade paper">Deckle Edge</span>
-              <span class="chip" data-token="letterpress print texture">Letterpress</span>
-              <span class="chip" data-token="embossed print texture">Prägung</span>
-              <span class="chip" data-token="metallic gold ink accents">Metallic Gold</span>
-              <span class="chip" data-token="metallic silver ink accents">Metallic Silber</span>
+              <span class="chip" data-token="matte coated paper texture, smooth finish">Matt gestrichen</span>
+              <span class="chip" data-token="uncoated offset paper texture, natural feel">Offset</span>
+              <span class="chip" data-token="linen paper texture, fabric grain">Leinenpapier</span>
+              <span class="chip" data-token="canvas texture, coarse weave">Leinwand</span>
+              <span class="chip" data-token="cotton rag paper texture, handmade feel">Bütten</span>
+              <span class="chip" data-token="deckle edge handmade paper, rough torn edges">Deckle Edge</span>
+              <span class="chip" data-token="letterpress print texture, deep impression">Letterpress</span>
+              <span class="chip" data-token="embossed print texture, raised relief">Prägung</span>
+              <span class="chip" data-token="metallic gold foil ink accents, shiny gold">Metallic Gold</span>
+              <span class="chip" data-token="metallic silver foil ink accents, shiny silver">Metallic Silber</span>
+              <span class="chip" data-token="risograph print texture, grainy ink, color misregistration">Risograph</span>
+              <span class="chip" data-token="aged yellowed paper texture, vintage worn paper">Gealtert / Vintage</span>
+              <span class="chip" data-token="rough watercolor paper texture, cold pressed, absorbent">Aquarellpapier</span>
+              <span class="chip" data-token="wood grain texture, natural timber surface">Holzmaserung</span>
             </div>
           </div>
 
@@ -673,12 +869,14 @@
           <div class="group">
             <div class="groupTitle">Qualität & Output</div>
             <div class="chipbar" data-group="technical">
-              <span class="chip" data-token="high resolution illustration">High-Res</span>
-              <span class="chip" data-token="print ready artwork">Druckbereit</span>
-              <span class="chip" data-token="8k illustration">8K</span>
-              <span class="chip" data-token="poster quality render">Poster-Qualität</span>
-              <span class="chip" data-token="ultra sharp details">Ultra-scharf</span>
-              <span class="chip" data-token="clean vector-like edges">Vektor-Kanten</span>
+              <span class="chip" data-token="high resolution illustration, sharp detail">High-Res</span>
+              <span class="chip" data-token="print ready artwork, press quality">Druckbereit</span>
+              <span class="chip" data-token="8k ultra high resolution illustration">8K</span>
+              <span class="chip" data-token="poster quality render, large format print">Poster-Qualität</span>
+              <span class="chip" data-token="ultra sharp details, crisp edges">Ultra-scharf</span>
+              <span class="chip" data-token="clean vector-like edges, precise lines">Vektor-Kanten</span>
+              <span class="chip" data-token="CMYK optimized artwork, print color profile">CMYK-optimiert</span>
+              <span class="chip" data-token="spot uv varnish effect, selective gloss highlights">Spot UV / Glanzlack</span>
             </div>
           </div>
 
@@ -687,7 +885,10 @@
             <div class="groupTitle">Midjourney Parameter</div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
               <div>
-                <div class="tiny">Seitenverhältnis</div>
+                <div class="field-label">
+                  <span class="tiny" style="margin-bottom:0">Seitenverhältnis</span>
+                  <span class="info-icon tip-right">i<span class="tooltip">Bildformat des Outputs. <strong>3:4 / 4:5</strong> für Adventskalender-Türchen (Hochformat). <strong>1:1</strong> für Instagram-Quadrat. <strong>16:9</strong> für Banner oder Hintergründe.</span></span>
+                </div>
                 <select id="ar">
                   <option value="3:4" selected>3:4 — Portrait</option>
                   <option value="4:5">4:5 — Portrait hoch</option>
@@ -698,7 +899,10 @@
                 </select>
               </div>
               <div>
-                <div class="tiny">Version</div>
+                <div class="field-label">
+                  <span class="tiny" style="margin-bottom:0">Version</span>
+                  <span class="info-icon">i<span class="tooltip">Midjourney Modell-Version. <strong>6.1</strong> ist aktuell die beste Wahl — detailreichste Ergebnisse, versteht komplexe Prompts am besten.</span></span>
+                </div>
                 <select id="v">
                   <option value="6.1" selected>6.1 — Aktuell</option>
                   <option value="6.0">6.0</option>
@@ -706,14 +910,20 @@
                 </select>
               </div>
               <div>
-                <div class="tiny">Style Mode</div>
+                <div class="field-label">
+                  <span class="tiny" style="margin-bottom:0">Style Mode</span>
+                  <span class="info-icon tip-right">i<span class="tooltip"><strong>Raw:</strong> MJ greift weniger ein — fotorealistischere, direktere Ergebnisse. Empfohlen wenn du genaue Kontrolle willst.<br><br><strong>Default:</strong> MJ fügt eigenständig künstlerische Interpretation hinzu — oft ausdrucksstärker, aber weniger vorhersehbar.</span></span>
+                </div>
                 <select id="mjStyle">
                   <option value="raw" selected>Raw — Fotorealistisch</option>
                   <option value="default">Default — Künstlerisch</option>
                 </select>
               </div>
               <div>
-                <div class="tiny">Quality</div>
+                <div class="field-label">
+                  <span class="tiny" style="margin-bottom:0">Quality</span>
+                  <span class="info-icon">i<span class="tooltip">Renderzeit und Detailtiefe. <strong>2</strong> = doppelte Renderzeit, maximale Details — ideal für Druckprodukte. <strong>1</strong> = Standard. <strong>0.5</strong> = schnell für Tests.</span></span>
+                </div>
                 <select id="quality">
                   <option value="2" selected>2 — Höchste</option>
                   <option value="1">1 — Standard</option>
@@ -721,36 +931,71 @@
                 </select>
               </div>
               <div>
-                <div class="tiny">Stylize (0–1000)</div>
+                <div class="field-label">
+                  <span class="tiny" style="margin-bottom:0">Stylize (0–1000)</span>
+                  <span class="info-icon tip-right">i<span class="tooltip">Wie stark MJ seinen eigenen ästhetischen Stil einbringt. <strong>0</strong> = sehr prompt-treu, wenig Eigeninterpretation. <strong>1000</strong> = maximale MJ-Ästhetik, kann vom Prompt abweichen. Empfehlung: <strong>100–300</strong> für Adventskalender.</span></span>
+                </div>
                 <input type="number" id="stylize" min="0" max="1000" value="100" />
               </div>
               <div>
-                <div class="tiny">Chaos (0–100)</div>
+                <div class="field-label">
+                  <span class="tiny" style="margin-bottom:0">Chaos (0–100)</span>
+                  <span class="info-icon">i<span class="tooltip">Zufälligkeit der Ergebnisse. <strong>0</strong> = konsistente, vorhersehbare Bilder. <strong>100</strong> = maximale Variation zwischen den 4 Grid-Optionen. Für Konsistenz bei <strong>0</strong> lassen.</span></span>
+                </div>
                 <input type="number" id="chaos" min="0" max="100" value="0" />
               </div>
               <div>
-                <div class="tiny">Stop (10–100)</div>
+                <div class="field-label">
+                  <span class="tiny" style="margin-bottom:0">Stop (10–100)</span>
+                  <span class="info-icon tip-right">i<span class="tooltip">Bricht den Render frühzeitig ab. <strong>100</strong> = vollständiges Bild (normal). <strong>50</strong> = halbfertiges, skizzenhafteres Ergebnis. Nützlich für bewusst unscharfe oder traumhafte Ästhetiken.</span></span>
+                </div>
                 <input type="number" id="stop" min="10" max="100" value="" placeholder="–" />
               </div>
               <div>
-                <div class="tiny">Weird (0–3000)</div>
+                <div class="field-label">
+                  <span class="tiny" style="margin-bottom:0">Weird (0–3000)</span>
+                  <span class="info-icon">i<span class="tooltip">Fügt ungewöhnliche, experimentelle Elemente hinzu. <strong>0</strong> = normal. Werte ab <strong>500</strong> produzieren surreale, unerwartete Ergebnisse. Für Standard-Adventskalender bei <strong>0</strong> lassen.</span></span>
+                </div>
                 <input type="number" id="weird" min="0" max="3000" value="0" />
               </div>
               <div>
-                <div class="tiny">Seed</div>
+                <div class="field-label">
+                  <span class="tiny" style="margin-bottom:0">Seed</span>
+                  <span class="info-icon tip-right">i<span class="tooltip">Fixiert den Zufallsgenerator. Gleicher Seed + gleicher Prompt = sehr ähnliche Ergebnisse. Nützlich um Variationen eines bestimmten Bilds zu erzeugen oder Ergebnisse zu reproduzieren.</span></span>
+                </div>
                 <input type="text" id="seed" placeholder="optional…" value="" />
               </div>
               <div>
-                <div class="tiny">Tile</div>
+                <div class="field-label">
+                  <span class="tiny" style="margin-bottom:0">Tile</span>
+                  <span class="info-icon">i<span class="tooltip">Erzeugt ein nahtlos kachelbares Muster — das Bild kann ohne sichtbare Kanten wiederholt werden. Ideal für Verpackungsdesign, Stoff- oder Tapetenmuster.</span></span>
+                </div>
                 <select id="tile">
                   <option value="off" selected>Aus</option>
                   <option value="on">An — Nahtloses Muster</option>
                 </select>
               </div>
+              <div>
+                <div class="field-label">
+                  <span class="tiny" style="margin-bottom:0">Repeat (1–40)</span>
+                  <span class="info-icon tip-right">i<span class="tooltip">Generiert mehrere Variationen gleichzeitig. <strong>4</strong> = 4 verschiedene Versionen in einem Job. Praktisch um schnell Alternativen zu vergleichen. Nur in Fast/Relax Mode verfügbar.</span></span>
+                </div>
+                <input type="number" id="repeat" min="1" max="40" value="" placeholder="–" />
+              </div>
+              <div style="grid-column:1/-1">
+                <div class="field-label">
+                  <span class="tiny" style="margin-bottom:0">Personalize (--p)</span>
+                  <span class="info-icon tip-right">i<span class="tooltip">Persönlicher MJ-Stil-Code. Wenn du in MJ unter <em>Einstellungen → Personalization</em> einen eigenen Stil trainiert hast, trägst du hier deinen Code ein — MJ gewichtet Ergebnisse dann nach deinen persönlichen Ästhetik-Präferenzen.</span></span>
+                </div>
+                <input type="text" id="personalize" placeholder="z.B. abc123 (optional)" value="" />
+              </div>
             </div>
             <div style="height:10px"></div>
-            <div class="tiny">Negative Prompt (--no)</div>
-            <input type="text" id="exclude" placeholder="z.B. people, text, watermark" value="" />
+            <div class="field-label">
+              <span class="tiny" style="margin-bottom:0">Negative Prompt (--no)</span>
+              <span class="info-icon tip-right">i<span class="tooltip">Elemente die <strong>nicht</strong> im Bild erscheinen sollen. Komma-getrennt. Beispiel: <em>snow, people, text</em>. Hinweis: Text, Wasserzeichen und Logos werden automatisch ausgeschlossen — hier nur zusätzliche Ausschlüsse eintragen.</span></span>
+            </div>
+            <input type="text" id="exclude" placeholder="z.B. snow, santa, gifts" value="" />
           </div>
 
           </div><!-- /tab-panel motiv -->
@@ -886,6 +1131,16 @@
           <div class="bd">
 
             <div id="warnings" class="warnings"></div>
+
+            <!-- Conflict Resolver Panel -->
+            <div class="conflict-panel collapsed" id="conflictPanel">
+              <div class="conflict-header" id="conflictHeader">
+                <span class="conflict-header-icon">⚠</span>
+                <span class="conflict-header-text" id="conflictCount">0 Konflikte bereinigt</span>
+                <span class="conflict-toggle-icon">▾</span>
+              </div>
+              <div class="conflict-body" id="conflictBody"></div>
+            </div>
             <div class="anchor-label">① Grundidee · ② Stil · ③ Rest · ④ Parameter</div>
 
             <textarea id="out" class="mono" spellcheck="false" placeholder="Dein Prompt wird hier automatisch generiert…" style="min-height:220px;"></textarea>
@@ -1070,14 +1325,17 @@
     const badge = document.getElementById('audienceBadge');
     const nameEl = document.getElementById('audienceActiveName');
     const tokensEl = document.getElementById('audienceActiveTokens');
+    const tabBadge = document.getElementById('zielgruppeBadge');
     if(!badge) return;
     if(selectedAudience && AUDIENCES[selectedAudience]){
       const a = AUDIENCES[selectedAudience];
       badge.classList.add('show');
       if(nameEl) nameEl.textContent = a.name;
       if(tokensEl) tokensEl.textContent = a.tokens.slice(0,3).join(' · ') + '…';
+      if(tabBadge) tabBadge.classList.add('visible');
     } else {
       badge.classList.remove('show');
+      if(tabBadge) tabBadge.classList.remove('visible');
     }
   }
 
@@ -1105,6 +1363,8 @@
     stop: $('stop'),
     weird: $('weird'),
     seed: $('seed'),
+    repeat: $('repeat'),
+    personalize: $('personalize'),
     exclude: $('exclude'),
     tile: $('tile'),
 
@@ -1616,10 +1876,34 @@ function enforcePipeline(tokens, pipeline){
     return { tokens: out, removed };
   }
 
+  function renderConflicts(conflicts){
+    const panel  = document.getElementById('conflictPanel');
+    const body   = document.getElementById('conflictBody');
+    const countEl= document.getElementById('conflictCount');
+    if(!panel || !body) return;
+    body.innerHTML = '';
+    if(conflicts.length === 0){ panel.classList.remove('has-items'); return; }
+    panel.classList.add('has-items');
+    panel.classList.remove('collapsed');
+    if(countEl) countEl.textContent = conflicts.length + ' Konflikt' + (conflicts.length > 1 ? 'e' : '') + ' automatisch bereinigt';
+    conflicts.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'conflict-item';
+      let html = `<span class="ci-icon">${c.icon}</span><span>`;
+      html += `<span class="ci-msg">${c.msg}</span>`;
+      if(c.kept)    html += ` <span class="ci-kept">✓ ${c.kept}</span>`;
+      if(c.dropped) html += ` <span class="ci-dropped">${c.dropped}</span>`;
+      html += `</span>`;
+      div.innerHTML = html;
+      body.appendChild(div);
+    });
+  }
+
   function compilePrompt(tokens, params, beingsMode){
     let p = uniq(tokens);
     let pr = [...params];
     const notes = [];
+    const conflicts = [];
 
     const intent = detectIntent(p);
     notes.push('INTENT: ' + intent);
@@ -1627,18 +1911,26 @@ function enforcePipeline(tokens, pipeline){
     // 1) Environment
     const envRes = resolveEnvironment(p, intent);
     p = envRes.tokens;
-    if(envRes.removed.length) notes.push('ENV bereinigt: entfernt → ' + envRes.removed.join(', '));
-    if(envRes.keptEnv) notes.push('ENV behalten: ' + envRes.keptEnv);
+    if(envRes.removed.length){
+      notes.push('ENV bereinigt: entfernt → ' + envRes.removed.join(', '));
+      conflicts.push({ icon:'🏙', msg:'Mehrere Settings — behalte nur:', kept: envRes.keptEnv || '(erstes)', dropped: envRes.removed.join(', ') });
+    }
 
     // 2) Wesen
     const chRes = resolveCharacters(p, beingsMode);
     p = chRes.tokens;
-    if(chRes.removed.length) notes.push('WESEN bereinigt: entfernt → ' + chRes.removed.join(', '));
+    if(chRes.removed.length){
+      notes.push('WESEN bereinigt: entfernt → ' + chRes.removed.join(', '));
+      conflicts.push({ icon:'👥', msg:'Figuren entfernt (Wesen-Modus):', dropped: chRes.removed.join(', ') });
+    }
 
-    // 3) Intent enforcement (Pattern/Poster/Product)
+    // 3) Intent enforcement
     const intentRes = enforceIntent(p, intent);
     p = intentRes.tokens;
-    if(intentRes.removed.length) notes.push('INTENT-Filter: entfernt → ' + intentRes.removed.join(', '));
+    if(intentRes.removed.length){
+      notes.push('INTENT-Filter: entfernt → ' + intentRes.removed.join(', '));
+      conflicts.push({ icon:'🎯', msg:'Intent-Filter (' + intent + ') entfernt:', dropped: intentRes.removed.join(', ') });
+    }
 
     // 4) Pipeline
     p = applyScenePresets(p);
@@ -1647,23 +1939,78 @@ function enforcePipeline(tokens, pipeline){
     p = adaptPerspective(p, pipe);
     const pipeRes = enforcePipeline(p, pipe);
     p = pipeRes.tokens;
-    if(pipeRes.removed.length) notes.push('PIPELINE-Filter: entfernt → ' + pipeRes.removed.join(', '));
+    if(pipeRes.removed.length){
+      notes.push('PIPELINE-Filter: entfernt → ' + pipeRes.removed.join(', '));
+      conflicts.push({ icon:'🎨', msg:'Pipeline (' + pipe + ') — inkompatible Tokens:', dropped: pipeRes.removed.join(', ') });
+    }
 
-    // 5) Minimal vs ultra detailed
-    if((hasToken(p,'minimal') || hasToken(p,'scandinavian')) && (hasToken(p,'ultra detailed') || hasToken(p,'dense'))){
-      const before = p.length;
-      p = p.filter(t => {
-        const n = norm(t);
-        return !(n.includes('ultra detailed') || n.includes('dense'));
-      });
-      if(p.length != before) notes.push('Minimal aktiv → ultra detailed/dense entfernt.');
+    // 5) Minimal vs Ultra Detailed
+    const hasMinimal = hasToken(p,'minimal') || hasToken(p,'scandinavian');
+    const hasUltra   = hasToken(p,'ultra detailed') || hasToken(p,'dense') || hasToken(p,'highly intricate');
+    if(hasMinimal && hasUltra){
+      const before = [...p];
+      p = p.filter(t => { const n = norm(t); return !(n.includes('ultra detailed') || n.includes('dense') || n.includes('highly intricate')); });
+      const dropped = before.filter(t => !p.includes(t));
+      notes.push('Minimal aktiv → ultra detailed/dense entfernt.');
+      conflicts.push({ icon:'⚖️', msg:'Minimal + Ultra-Detail — Minimal gewinnt, entferne:', dropped: dropped.join(', ') });
+    }
+
+    // 6) Wetter-Konflikte
+    const weatherGroups = [
+      { label:'Niederschlag', patterns:['heavy snowfall','light snowfall','rainy winter'] },
+      { label:'Licht/Stimmung', patterns:['sunny winter','overcast winter','foggy winter','starry winter'] },
+    ];
+    for(const wg of weatherGroups){
+      const matches = p.filter(t => wg.patterns.some(pat => norm(t).includes(norm(pat))));
+      if(matches.length > 1){
+        const keep = matches[matches.length - 1];
+        const drop = matches.slice(0, -1);
+        p = p.filter(t => !drop.includes(t));
+        conflicts.push({ icon:'🌨', msg:`Wetter-Konflikt (${wg.label}) — behalte letzten:`, kept: keep, dropped: drop.join(', ') });
+        notes.push('Wetter-Konflikt: ' + drop.join(', ') + ' → nur: ' + keep);
+      }
+    }
+
+    // 7) Detailgrad-Spam
+    const detailTokens = p.filter(t => {
+      const n = norm(t);
+      return n.includes('ultra detailed') || n.includes('highly intricate') ||
+             n.includes('minimal line') || n.includes('clean illustration') ||
+             n.includes('rough sketch') || n.includes('soft painterly') ||
+             n.includes('hand drawn') || n.includes('dense ornamental');
+    });
+    if(detailTokens.length > 2){
+      const keep = detailTokens.slice(0, 2);
+      const drop = detailTokens.slice(2);
+      p = p.filter(t => !drop.includes(t));
+      conflicts.push({ icon:'🔍', msg:'Zu viele Detailgrad-Tokens — behalte 2:', kept: keep.join(', '), dropped: drop.join(', ') });
+    }
+
+    // 8) Qualitäts-Spam
+    const qualityKeywords = ['high resolution','print ready','8k','poster quality','ultra sharp','clean vector'];
+    const qualTokens = p.filter(t => qualityKeywords.some(k => norm(t).includes(k)));
+    if(qualTokens.length > 2){
+      const keep = qualTokens.slice(0, 2);
+      const drop = qualTokens.slice(2);
+      p = p.filter(t => !drop.includes(t));
+      conflicts.push({ icon:'⚙️', msg:'Qualitäts-Spam — behalte 2:', kept: keep.join(', '), dropped: drop.join(', ') });
+    }
+
+    // 9) Foto vs. Illustration
+    const hasPhoto  = p.some(t => norm(t).includes('realistic photography') || norm(t).includes('hyperrealistic'));
+    const hasIllust = p.some(t => norm(t).includes('illustration') || norm(t).includes('watercolor') || norm(t).includes('gouache') || norm(t).includes('storybook'));
+    if(hasPhoto && hasIllust){
+      const illTokens = p.filter(t => norm(t).includes('illustration') || norm(t).includes('watercolor') || norm(t).includes('gouache') || norm(t).includes('storybook'));
+      p = p.filter(t => !illTokens.includes(t));
+      conflicts.push({ icon:'📸', msg:'Foto + Illustration — Foto gewinnt, entferne:', dropped: illTokens.join(', ') });
     }
 
     p = uniq(p);
+    renderConflicts(conflicts);
     return { parts: p, params: pr, notes };
   }
 
-  // Backwards-Compat: alter Name
+  // Backwards-Compat
   function resolveConflicts(tokens, params){
     return compilePrompt(tokens, params, window.__beingsMode||'none');
   }
@@ -1769,82 +2116,96 @@ function buildPrompt(){
     const g = selectedTokensByGroup();
     let parts = [];
 
-    // ── ANKER #1: Grundidee (bleibt immer an erster Stelle) ──────────────
+    // ── ANKER #1: Grundidee ───────────────────────────────────────────────
     const motif = (els.motif?.value || '').trim();
     if(motif) parts.push(motif);
 
-    // ── HAUPTSTIL direkt nach Anker (#2) ─────────────────────────────────
-    // mainStyle kommt sofort nach der Grundidee, bevor alles andere
-    if(g.mainStyle && g.mainStyle.length) parts.push(...g.mainStyle);
+    // ── HAUPTSTIL direkt nach Anker (#2) ──────────────────────────────────
+    if(g.mainStyle && g.mainStyle.length){
+      parts.push(...g.mainStyle);
+    } else {
+      parts.push('detailed christmas illustration'); // sinnvoller Default
+    }
 
-    // ── Motif-Cluster keyword (optional, nach Stil) ───────────────────────
+    // ── Motif-Cluster keyword ──────────────────────────────────────────────
     const motifToken = (els.motifToken?.value || '').trim();
     if(motifToken) parts.push(motifToken);
 
-    // ── Design Family tokens ──────────────────────────────────────────────
+    // ── Design Family tokens ───────────────────────────────────────────────
     const famKey = (els.designFamily?.value || '').trim();
     const fam = famKey ? DESIGN_FAMILIES[famKey] : null;
     if(fam && Array.isArray(fam.tokens)) parts.push(...fam.tokens);
 
-    // ── Zielgruppe tokens ─────────────────────────────────────────────────
+    // ── Zielgruppe tokens ──────────────────────────────────────────────────
     if(selectedAudience && AUDIENCES[selectedAudience]){
       parts.push(...AUDIENCES[selectedAudience].tokens);
     }
 
-    // ── Wesen im Bild (globaler Gatekeeper) ──────────────────────────────
+    // ── Wesen im Bild ──────────────────────────────────────────────────────
     const beingsMode = (document.getElementById('beingsMode')?.value || 'none').trim();
     const beingsAdd = {
-      people: ['with people', 'human figures'],
-      animals: ['with animals', 'cute animals'],
+      people:     ['with people', 'human figures'],
+      animals:    ['with animals', 'cute animals'],
       characters: ['with characters', 'christmas characters'],
-      both: ['with people', 'with animals']
+      both:       ['with people', 'with animals']
     };
     if(beingsAdd[beingsMode]) parts.push(...beingsAdd[beingsMode]);
 
-    // ── Restliche Gruppen (Reihenfolge: Szene → Wetter → Details → ...) ──
-    parts.push(...(g.scene || []));
-    parts.push(...(g.weather || []));
-    // mainStyle wurde bereits oben eingefügt – hier NICHT nochmal pushen
-    parts.push(...(g.detail || []));
-    parts.push(...(g.colors || []));
+    // ── Restliche Gruppen ──────────────────────────────────────────────────
+    parts.push(...(g.scene       || []));
+    parts.push(...(g.weather     || []));
+    parts.push(...(g.detail      || []));
+    parts.push(...(g.colors      || []));
     parts.push(...(g.composition || []));
-    parts.push(...(g.elements || []));
-    parts.push(...(g.characters || []));
-    parts.push(...(g.decor || []));
-    parts.push(...(g.paper || []));
-    parts.push(...(g.technical || []));
+    parts.push(...(g.elements    || []));
+    parts.push(...(g.characters  || []));
+    parts.push(...(g.decor       || []));
+    parts.push(...(g.paper       || []));
+    parts.push(...(g.technical   || []));
 
-    // Immer dabei
-    parts.push('christmas advent calendar background illustration');
-    parts.push('no readable text');
+    // ── Kontext-sensitiver Suffix ──────────────────────────────────────────
+    const hasScene = (g.scene || []).length > 0;
+    if(!hasScene) parts.push('christmas advent calendar motif');
+    parts.push('professional print quality');
 
     let clean = uniqKeepOrder(parts);
 
-    // Midjourney params
+    // ── Midjourney params ──────────────────────────────────────────────────
     let params = [];
-    if(els.ar?.value) params.push(`--ar ${els.ar.value}`);
-    if(els.v?.value) params.push(`--v ${els.v.value}`);
+    if(els.ar?.value)            params.push(`--ar ${els.ar.value}`);
+    if(els.v?.value)             params.push(`--v ${els.v.value}`);
     if(els.mjStyle?.value === 'raw') params.push(`--style raw`);
-    if(els.quality?.value) params.push(`--quality ${els.quality.value}`);
+    if(els.quality?.value)       params.push(`--quality ${els.quality.value}`);
     if(els.stylize?.value !== '') params.push(`--stylize ${els.stylize.value}`);
-    if(els.chaos?.value !== '') params.push(`--chaos ${els.chaos.value}`);
-    if(els.stop?.value !== '') params.push(`--stop ${els.stop.value}`);
+    if(els.chaos?.value !== '')   params.push(`--chaos ${els.chaos.value}`);
+    if(els.stop?.value !== '')    params.push(`--stop ${els.stop.value}`);
     const w = Number(els.weird?.value || '0');
     if(w > 0) params.push(`--weird ${w}`);
     const seed = (els.seed?.value || '').trim();
     if(seed) params.push(`--seed ${seed}`);
     if(els.tile?.value === 'on') params.push(`--tile`);
-    const exUser = (els.exclude?.value || '').trim();
+    const repeatVal = (els.repeat?.value || '').trim();
+    if(repeatVal && Number(repeatVal) > 1) params.push(`--repeat ${repeatVal}`);
+    const personalizeVal = (els.personalize?.value || '').trim();
+    if(personalizeVal) params.push(`--p ${personalizeVal}`);
+
+    // ── --no: "no readable text" raus aus Body → rein in --no ─────────────
+    const exUser   = (els.exclude?.value || '').trim();
     const beingsNo = (beingsMode === 'none') ? ['people','person','humans','faces','animals','pets','characters'] : [];
-    const exAll = [...(exUser ? exUser.split(',').map(s=>s.trim()).filter(Boolean) : []), ...beingsNo];
+    const alwaysNo = ['text','readable text','watermark','logo','signature'];
+    const exAll = [
+      ...(exUser ? exUser.split(',').map(s=>s.trim()).filter(Boolean) : []),
+      ...beingsNo,
+      ...alwaysNo
+    ];
     const ex = Array.from(new Set(exAll)).join(', ');
     if(ex) params.push(`--no ${ex}`);
 
-    // Prompt-Compiler ausführen
+    // ── Conflict resolver ──────────────────────────────────────────────────
     clearWarnings();
-    window.__beingsMode = (document.getElementById('beingsMode')?.value || window.__beingsMode || 'none').trim();
+    window.__beingsMode = beingsMode;
     const resolved = resolveConflicts(clean, params);
-    clean = resolved.parts;
+    clean  = resolved.parts;
     params = resolved.params;
     resolved.notes.forEach(addWarning);
 
@@ -1861,6 +2222,7 @@ function buildPrompt(){
     if(wrap) wrap.style.display = 'none';
     if(box)  box.textContent = '';
     if(copyBtn) copyBtn.style.display = 'none';
+    renderConflicts([]);
   }
 
   function getCurrentState(){
@@ -1881,6 +2243,8 @@ function buildPrompt(){
       seed: els.seed?.value || '',
       exclude: els.exclude?.value || '',
       tile: els.tile?.value || 'off',
+      repeat: els.repeat?.value || '',
+      personalize: els.personalize?.value || '',
       chips: chips().map(c => ({
         token: c.getAttribute('data-token'),
         w: c.getAttribute('data-w') || '0'
@@ -1922,6 +2286,8 @@ if(els.motifTokenLabel) els.motifTokenLabel.textContent = (s.motifToken || '–'
     if(els.seed) els.seed.value = s.seed || '';
     if(els.exclude) els.exclude.value = s.exclude || '';
     if(els.tile) els.tile.value = s.tile || 'off';
+    if(els.repeat) els.repeat.value = s.repeat || '';
+    if(els.personalize) els.personalize.value = s.personalize || '';
 
     if(Array.isArray(s.chips)){
       const map = new Map(s.chips.map(x => [x.token, x.w]));
@@ -2173,7 +2539,7 @@ if(els.motifTokenLabel) els.motifTokenLabel.textContent = (s.motifToken || '–'
   }
 
   // Live update on inputs
-  [els.motif, els.motifCluster, els.designFamily, els.beingsMode, els.ar, els.v, els.mjStyle, els.quality, els.stylize, els.chaos, els.stop, els.weird, els.seed, els.exclude, els.tile].forEach(el => {
+  [els.motif, els.motifCluster, els.designFamily, els.beingsMode, els.ar, els.v, els.mjStyle, els.quality, els.stylize, els.chaos, els.stop, els.weird, els.seed, els.exclude, els.tile, els.repeat, els.personalize].forEach(el => {
     if(!el) return;
     el.addEventListener('input', () => { liveUpdate(); saveState(); });
     el.addEventListener('change', () => { liveUpdate(); saveState(); });
@@ -2208,7 +2574,29 @@ if(els.motifTokenLabel) els.motifTokenLabel.textContent = (s.motifToken || '–'
     if(k==='r'){ resetAll(); }
   });
 
+  // ── THEME TOGGLE ──────────────────────────────────────────────────────────
+  function applyTheme(theme){
+    document.documentElement.setAttribute('data-theme', theme);
+    const label = document.getElementById('themeLabel');
+    if(label) label.textContent = theme === 'light' ? 'Light' : 'Dark';
+    localStorage.setItem('prompti-theme', theme);
+  }
+  function initTheme(){
+    const saved = localStorage.getItem('prompti-theme') || 'dark';
+    applyTheme(saved);
+  }
+  document.getElementById('themeToggle')?.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  });
+
+  // ── CONFLICT PANEL COLLAPSE ────────────────────────────────────────────────
+  document.getElementById('conflictHeader')?.addEventListener('click', () => {
+    document.getElementById('conflictPanel')?.classList.toggle('collapsed');
+  });
+
   // Boot
+  initTheme();
   loadState();
   // Sync derived UI
   setMotifTokenFromCluster(false);
