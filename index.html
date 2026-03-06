@@ -2152,16 +2152,17 @@ function buildPrompt(){
     if(beingsAdd[beingsMode]) parts.push(...beingsAdd[beingsMode]);
 
     // ── Restliche Gruppen ──────────────────────────────────────────────────
-    parts.push(...(g.scene       || []));
-    parts.push(...(g.weather     || []));
-    parts.push(...(g.detail      || []));
-    parts.push(...(g.colors      || []));
-    parts.push(...(g.composition || []));
-    parts.push(...(g.elements    || []));
-    parts.push(...(g.characters  || []));
-    parts.push(...(g.decor       || []));
-    parts.push(...(g.paper       || []));
-    parts.push(...(g.technical   || []));
+    // ── Reihenfolge: Komposition (Struktur) → Szene → Wesen/Figuren → Elemente/Deko → Wetter/Licht → Farbe → Detail → Papier → Qualität
+    parts.push(...(g.composition || []));  // strukturelle Weiche, früh gewichten
+    parts.push(...(g.scene       || []));  // wo findet es statt
+    parts.push(...(g.characters  || []));  // wer ist drin
+    parts.push(...(g.elements    || []));  // was ist drin
+    parts.push(...(g.decor       || []));  // wie ist es dekoriert
+    parts.push(...(g.weather     || []));  // Atmosphäre/Licht
+    parts.push(...(g.colors      || []));  // Farbpalette
+    parts.push(...(g.detail      || []));  // Detailgrad
+    parts.push(...(g.paper       || []));  // Output-Textur
+    parts.push(...(g.technical   || []));  // technische Qualität
 
     // ── Kontext-sensitiver Suffix ──────────────────────────────────────────
     const hasScene = (g.scene || []).length > 0;
